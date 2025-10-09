@@ -11,6 +11,7 @@ import { Group, Vector3 } from "three";
 import * as THREE from "three";
 import { type Pin, type Treatment } from "../types/Treatment";
 import TreatmentForm from "./TreatmentForm";
+import { useBodyStore } from "../store/useBodyStore";
 
 interface BodyProps {
   pins: Pin[];
@@ -252,6 +253,8 @@ const Body = forwardRef<BodyRef, BodyProps>(
     const controlsRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
     const fbx = useFBX("/dude.fbx");
     const { camera, raycaster, mouse } = useThree();
+    const { updateCameraPosition, updateCameraTarget } =
+      useBodyStore();
 
     // Handle mouse clicks to add pins
     const handleClick = useCallback(
@@ -398,6 +401,22 @@ const Body = forwardRef<BodyRef, BodyProps>(
           minDistance={0.5}
           maxDistance={20}
           maxPolarAngle={Math.PI / 2}
+          onChange={() => {
+            if (controlsRef.current) {
+              const position = camera.position;
+              const target = controlsRef.current.target;
+              updateCameraPosition({
+                x: position.x,
+                y: position.y,
+                z: position.z,
+              });
+              updateCameraTarget({
+                x: target.x,
+                y: target.y,
+                z: target.z,
+              });
+            }
+          }}
         />
       </>
     );

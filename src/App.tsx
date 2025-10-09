@@ -1,90 +1,72 @@
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
 import Body, { type BodyRef } from "./components/Body";
 import CameraControls, {
   type CameraControlsRef,
 } from "./components/CameraControls";
+import { useBodyStore } from "./store/useBodyStore";
 import { type Pin, type Treatment } from "./types/Treatment";
 import "./App.css";
 
 function App() {
-  const [pins, setPins] = useState<Pin[]>([]);
-  const [isAddingPin, setIsAddingPin] = useState(false);
+  const {
+    pins,
+    isAddingPin,
+    setIsAddingPin,
+    addPin,
+    updatePin,
+    updateTreatment,
+    removePin,
+    clearAllPins,
+  } = useBodyStore();
+
   const cameraControlsRef = useRef<CameraControlsRef>(null);
   const bodyRef = useRef<BodyRef>(null);
 
-  const handleAddPin = useCallback((pin: Pin) => {
-    setPins((prev) => [...prev, pin]);
-    setIsAddingPin(false);
-  }, []);
+  const handleAddPin = useCallback(
+    (pin: Pin) => {
+      addPin(pin);
+    },
+    [addPin]
+  );
 
   const handleUpdatePin = useCallback(
     (id: string, comment: string) => {
-      setPins((prev) =>
-        prev.map((pin) => (pin.id === id ? { ...pin, comment } : pin))
-      );
+      updatePin(id, comment);
     },
-    []
+    [updatePin]
   );
 
   const handleUpdateTreatment = useCallback(
     (id: string, treatment: Treatment) => {
-      setPins((prev) =>
-        prev.map((pin) =>
-          pin.id === id ? { ...pin, treatment } : pin
-        )
-      );
+      updateTreatment(id, treatment);
     },
-    []
+    [updateTreatment]
   );
 
-  const handleRemovePin = useCallback((id: string) => {
-    setPins((prev) => prev.filter((pin) => pin.id !== id));
-  }, []);
+  const handleRemovePin = useCallback(
+    (id: string) => {
+      removePin(id);
+    },
+    [removePin]
+  );
 
   const handleSavePins = useCallback(() => {
-    const pinsData = pins.map((pin) => ({
-      id: pin.id,
-      position: pin.position,
-      comment: pin.comment,
-      treatment: pin.treatment,
-    }));
-
-    // Save to localStorage
-    localStorage.setItem("body3d-pins", JSON.stringify(pinsData));
+    // Data is automatically saved by Zustand persist middleware
     alert("Pins saved successfully!");
-  }, [pins]);
+  }, []);
 
   const handleLoadPins = useCallback(() => {
-    const savedPins = localStorage.getItem("body3d-pins");
-    if (savedPins) {
-      const pinsData = JSON.parse(savedPins);
-      const loadedPins = pinsData.map(
-        (pin: {
-          id: string;
-          position: { x: number; y: number; z: number };
-          comment: string;
-          treatment?: Treatment;
-        }) => ({
-          id: pin.id,
-          position: pin.position,
-          comment: pin.comment,
-          treatment: pin.treatment,
-        })
-      );
-      setPins(loadedPins);
-      alert("Pins loaded successfully!");
-    } else {
-      alert("No saved pins found.");
-    }
+    // Data is automatically loaded by Zustand persist middleware
+    alert("Pins loaded successfully!");
   }, []);
 
   const handleClearPins = useCallback(() => {
     if (confirm("Are you sure you want to clear all pins?")) {
-      setPins([]);
+      clearAllPins();
     }
-  }, []);
+  }, [clearAllPins]);
 
   const handleCameraChange = useCallback(
     (position: Vector3, target: Vector3) => {
