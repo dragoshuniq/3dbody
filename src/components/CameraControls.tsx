@@ -53,18 +53,25 @@ const CameraControls = forwardRef<
   const [editTarget, setEditTarget] = useState(cameraTarget);
   const cameraPresets = {
     face: {
-      position: new Vector3(0, 1.5, 1.5),
-      target: new Vector3(0, 1.5, 0),
+      position: new Vector3(-0.025, 1.739, 0.55),
+      target: new Vector3(-0.078, 1.698, -0.163),
       label: "Face",
       icon: FaEye,
       color: "#4CAF50",
     },
     chest: {
-      position: new Vector3(0, 0.5, 2),
-      target: new Vector3(0, 0.5, 0),
+      position: new Vector3(-0.021, 1.277, 0.836),
+      target: new Vector3(-0.093, 1.221, -0.134),
       label: "Chest",
       icon: FaUser,
       color: "#2196F3",
+    },
+    legs: {
+      position: new Vector3(-0.002, 0.555, 1.532),
+      target: new Vector3(-0.121, 0.461, -0.088),
+      label: "Legs",
+      icon: FaRunning,
+      color: "#9C27B0",
     },
     hands: {
       position: new Vector3(1.5, 0.5, 1),
@@ -72,13 +79,6 @@ const CameraControls = forwardRef<
       label: "Hands",
       icon: FaHands,
       color: "#FF9800",
-    },
-    legs: {
-      position: new Vector3(0, -1, 2),
-      target: new Vector3(0, -1, 0),
-      label: "Legs",
-      icon: FaRunning,
-      color: "#9C27B0",
     },
     heart: {
       position: new Vector3(0.3, 0.3, 1.5),

@@ -2,163 +2,43 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type Pin, type Treatment } from "../types/Treatment";
 
-// Dummy treatment data based on your example
+// 3 Dummy treatment data with exact positions
 const dummyTreatments: Treatment[] = [
-  // Forehead area - Botox (purple dots)
+  // Face treatment
   {
     id: "treatment-1",
-    area: "Forehead",
+    area: "Face",
     treatment: "Botox Cosmetic",
-    dosage: "10 U",
+    dosage: "15 U",
     date: "2024-11-05",
-    cost: 350,
+    cost: 450,
     color: "#8B5CF6",
-    position: { x: 0, y: 1.5, z: 0.1 },
-    notes: "Horizontal forehead lines",
+    position: { x: -0.025, y: 1.739, z: 0.55 },
+    notes: "Facial rejuvenation treatment",
   },
+  // Chest treatment
   {
     id: "treatment-2",
-    area: "Forehead",
-    treatment: "Botox Cosmetic",
-    dosage: "8 U",
-    date: "2024-11-05",
-    cost: 280,
-    color: "#8B5CF6",
-    position: { x: -0.3, y: 1.5, z: 0.1 },
+    area: "Chest",
+    treatment: "Juvederm Voluma",
+    dosage: "2.5 mL",
+    date: "2024-10-15",
+    cost: 750,
+    color: "#F59E0B",
+    position: { x: -0.021, y: 1.277, z: 0.836 },
+    notes: "Chest contouring and enhancement",
   },
+  // Legs treatment
   {
     id: "treatment-3",
-    area: "Forehead",
-    treatment: "Botox Cosmetic",
-    dosage: "8 U",
-    date: "2024-11-05",
-    cost: 280,
-    color: "#8B5CF6",
-    position: { x: 0.3, y: 1.5, z: 0.1 },
-  },
-
-  // Glabella (between eyebrows) - Botox
-  {
-    id: "treatment-4",
-    area: "Glabella",
-    treatment: "Botox Cosmetic",
-    dosage: "35 U",
-    date: "2024-11-05",
-    cost: 420,
-    color: "#8B5CF6",
-    position: { x: 0, y: 1.2, z: 0.1 },
-    notes: "Frown lines between eyebrows",
-  },
-
-  // Crows feet - Botox (purple dots)
-  {
-    id: "treatment-5",
-    area: "Crows Feet",
-    treatment: "Botox Cosmetic",
-    dosage: "15 U",
-    date: "2024-11-05",
-    cost: 225,
-    color: "#8B5CF6",
-    position: { x: -0.8, y: 1.0, z: 0.1 },
-  },
-  {
-    id: "treatment-6",
-    area: "Crows Feet",
-    treatment: "Botox Cosmetic",
-    dosage: "15 U",
-    date: "2024-11-05",
-    cost: 225,
-    color: "#8B5CF6",
-    position: { x: 0.8, y: 1.0, z: 0.1 },
-  },
-  {
-    id: "treatment-7",
-    area: "Crows Feet",
-    treatment: "Botox Cosmetic",
-    dosage: "12 U",
-    date: "2024-11-05",
-    cost: 180,
-    color: "#8B5CF6",
-    position: { x: -0.9, y: 0.8, z: 0.1 },
-  },
-  {
-    id: "treatment-8",
-    area: "Crows Feet",
-    treatment: "Botox Cosmetic",
-    dosage: "12 U",
-    date: "2024-11-05",
-    cost: 180,
-    color: "#8B5CF6",
-    position: { x: 0.9, y: 0.8, z: 0.1 },
-  },
-
-  // Chin - Juvederm (orange/yellow dots)
-  {
-    id: "treatment-9",
-    area: "Chin",
-    treatment: "Juvederm Voluma",
-    dosage: "2 mL",
-    date: "2024-10-15",
-    cost: 650,
-    color: "#F59E0B",
-    position: { x: -0.3, y: -0.5, z: 0.1 },
-    notes: "Chin augmentation and definition",
-  },
-  {
-    id: "treatment-10",
-    area: "Chin",
-    treatment: "Juvederm Voluma",
-    dosage: "1.5 mL",
-    date: "2024-10-15",
-    cost: 500,
-    color: "#F59E0B",
-    position: { x: 0.3, y: -0.5, z: 0.1 },
-  },
-
-  // Lips - Juvederm (orange dots)
-  {
-    id: "treatment-11",
-    area: "Lip",
-    treatment: "Juvederm Volift",
-    dosage: "1 mL",
+    area: "Legs",
+    treatment: "Sculptra",
+    dosage: "5 mL",
     date: "2024-09-20",
-    cost: 550,
-    color: "#F59E0B",
-    position: { x: -0.2, y: -0.2, z: 0.1 },
-    notes: "Upper lip enhancement",
-  },
-  {
-    id: "treatment-12",
-    area: "Lip",
-    treatment: "Juvederm Volift",
-    dosage: "1 mL",
-    date: "2024-09-20",
-    cost: 550,
-    color: "#F59E0B",
-    position: { x: 0.2, y: -0.2, z: 0.1 },
-    notes: "Lower lip enhancement",
-  },
-
-  // Additional forehead points
-  {
-    id: "treatment-13",
-    area: "Forehead",
-    treatment: "Botox Cosmetic",
-    dosage: "6 U",
-    date: "2024-11-05",
-    cost: 210,
-    color: "#8B5CF6",
-    position: { x: -0.5, y: 1.4, z: 0.1 },
-  },
-  {
-    id: "treatment-14",
-    area: "Forehead",
-    treatment: "Botox Cosmetic",
-    dosage: "6 U",
-    date: "2024-11-05",
-    cost: 210,
-    color: "#8B5CF6",
-    position: { x: 0.5, y: 1.4, z: 0.1 },
+    cost: 1200,
+    color: "#10B981",
+    position: { x: -0.002, y: 0.555, z: 1.532 },
+    notes: "Leg contouring and volume restoration",
   },
 ];
 
@@ -174,6 +54,7 @@ interface BodyState {
   // Pins state
   pins: Pin[];
   isAddingPin: boolean;
+  selectedPinId: string | null;
 
   // Camera state
   cameraPosition: { x: number; y: number; z: number };
@@ -185,6 +66,7 @@ interface BodyState {
   updateTreatment: (id: string, treatment: Treatment) => void;
   removePin: (id: string) => void;
   setIsAddingPin: (isAdding: boolean) => void;
+  setSelectedPin: (id: string | null) => void;
   updateCameraPosition: (position: {
     x: number;
     y: number;
@@ -205,6 +87,7 @@ export const useBodyStore = create<BodyState>()(
       // Initial state
       pins: initialPins,
       isAddingPin: false,
+      selectedPinId: null,
       cameraPosition: { x: 0, y: 0, z: 5 },
       cameraTarget: { x: 0, y: 0, z: 0 },
 
@@ -235,6 +118,8 @@ export const useBodyStore = create<BodyState>()(
         })),
 
       setIsAddingPin: (isAdding) => set({ isAddingPin: isAdding }),
+
+      setSelectedPin: (id) => set({ selectedPinId: id }),
 
       updateCameraPosition: (position) =>
         set({ cameraPosition: position }),

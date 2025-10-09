@@ -40,6 +40,9 @@ const PinComponent: React.FC<{
   const [isEditing, setIsEditing] = useState(false);
   const [comment, setComment] = useState(pin.comment);
   const [showTreatmentForm, setShowTreatmentForm] = useState(false);
+  const { selectedPinId, setSelectedPin } = useBodyStore();
+
+  const isSelected = selectedPinId === pin.id;
 
   const handleSave = () => {
     onUpdateComment(pin.id, comment);
@@ -57,130 +60,160 @@ const PinComponent: React.FC<{
     pin.position.z
   );
 
+  const handlePinClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    setSelectedPin(isSelected ? null : pin.id);
+  };
+
   return (
     <group position={pinPosition}>
       {/* Pin sphere with treatment color */}
-      <mesh>
+      <mesh onClick={handlePinClick}>
         <sphereGeometry args={[0.1, 16, 16]} />
-        <meshStandardMaterial color={pin.treatment?.color || "red"} />
+        <meshStandardMaterial
+          color={pin.treatment?.color || "red"}
+          emissive={
+            isSelected ? pin.treatment?.color || "red" : "#000000"
+          }
+          emissiveIntensity={isSelected ? 0.3 : 0}
+        />
       </mesh>
 
-      {/* Pin label with comment */}
-      <Html
-        position={[0, 0.3, 0]}
-        center
-        distanceFactor={10}
-        occlude
-        style={{
-          background: "rgba(0,0,0,0.8)",
-          color: "white",
-          padding: "8px 12px",
-          borderRadius: "4px",
-          fontSize: "12px",
-          minWidth: "120px",
-          maxWidth: "200px",
-          wordWrap: "break-word",
-        }}
-      >
-        {isEditing ? (
-          <div>
-            <textarea
-              value={comment}
-              onChange={(e) => setComment(e.target.value)}
-              style={{
-                width: "100%",
-                minHeight: "60px",
-                background: "white",
-                color: "black",
-                border: "none",
-                borderRadius: "2px",
-                padding: "4px",
-                fontSize: "12px",
-                resize: "vertical",
-              }}
-            />
-            <div
-              style={{
-                marginTop: "4px",
-                display: "flex",
-                gap: "4px",
-              }}
-            >
-              <button
-                onClick={handleSave}
+      {/* Pin label with comment - only show when selected */}
+      {isSelected && (
+        <Html
+          position={[0, 0.3, 0]}
+          center
+          distanceFactor={10}
+          occlude
+          style={{
+            background: "rgba(0,0,0,0.9)",
+            color: "white",
+            padding: "8px 12px",
+            borderRadius: "4px",
+            fontSize: "12px",
+            minWidth: "120px",
+            maxWidth: "200px",
+            wordWrap: "break-word",
+            border: `2px solid ${pin.treatment?.color || "red"}`,
+          }}
+        >
+          {isEditing ? (
+            <div>
+              <textarea
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
                 style={{
-                  background: "#4CAF50",
-                  color: "white",
+                  width: "100%",
+                  minHeight: "60px",
+                  background: "white",
+                  color: "black",
                   border: "none",
-                  padding: "2px 8px",
                   borderRadius: "2px",
-                  fontSize: "10px",
-                  cursor: "pointer",
+                  padding: "4px",
+                  fontSize: "12px",
+                  resize: "vertical",
+                }}
+              />
+              <div
+                style={{
+                  marginTop: "4px",
+                  display: "flex",
+                  gap: "4px",
                 }}
               >
-                Save
-              </button>
-              <button
-                onClick={() => {
-                  setComment(pin.comment);
-                  setIsEditing(false);
-                }}
-                style={{
-                  background: "#f44336",
-                  color: "white",
-                  border: "none",
-                  padding: "2px 8px",
-                  borderRadius: "2px",
-                  fontSize: "10px",
-                  cursor: "pointer",
-                }}
-              >
-                Cancel
-              </button>
+                <button
+                  onClick={handleSave}
+                  style={{
+                    background: "#4CAF50",
+                    color: "white",
+                    border: "none",
+                    padding: "2px 8px",
+                    borderRadius: "2px",
+                    fontSize: "10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Save
+                </button>
+                <button
+                  onClick={() => {
+                    setComment(pin.comment);
+                    setIsEditing(false);
+                  }}
+                  style={{
+                    background: "#f44336",
+                    color: "white",
+                    border: "none",
+                    padding: "2px 8px",
+                    borderRadius: "2px",
+                    fontSize: "10px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Cancel
+                </button>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div>
-            {pin.treatment ? (
-              <div style={{ marginBottom: "4px" }}>
-                <div style={{ fontWeight: "bold", fontSize: "11px" }}>
-                  {pin.treatment.area}
-                </div>
-                <div style={{ fontSize: "10px", color: "#ccc" }}>
-                  {pin.treatment.treatment} - {pin.treatment.dosage}
-                </div>
-                <div style={{ fontSize: "10px", color: "#ccc" }}>
-                  ${pin.treatment.cost} - {pin.treatment.date}
-                </div>
-                {pin.treatment.notes && (
+          ) : (
+            <div>
+              {pin.treatment ? (
+                <div style={{ marginBottom: "4px" }}>
                   <div
+                    style={{ fontWeight: "bold", fontSize: "11px" }}
+                  >
+                    {pin.treatment.area}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#ccc" }}>
+                    {pin.treatment.treatment} - {pin.treatment.dosage}
+                  </div>
+                  <div style={{ fontSize: "10px", color: "#ccc" }}>
+                    ${pin.treatment.cost} - {pin.treatment.date}
+                  </div>
+                  {pin.treatment.notes && (
+                    <div
+                      style={{
+                        fontSize: "9px",
+                        color: "#aaa",
+                        marginTop: "2px",
+                      }}
+                    >
+                      {pin.treatment.notes}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div style={{ marginBottom: "4px" }}>
+                  {pin.comment || "Click to add treatment"}
+                </div>
+              )}
+              <div
+                style={{
+                  display: "flex",
+                  gap: "2px",
+                  flexWrap: "wrap",
+                }}
+              >
+                {!pin.treatment && (
+                  <button
+                    onClick={() => setShowTreatmentForm(true)}
                     style={{
+                      background: "#8B5CF6",
+                      color: "white",
+                      border: "none",
+                      padding: "2px 6px",
+                      borderRadius: "2px",
                       fontSize: "9px",
-                      color: "#aaa",
-                      marginTop: "2px",
+                      cursor: "pointer",
                     }}
                   >
-                    {pin.treatment.notes}
-                  </div>
+                    Add Treatment
+                  </button>
                 )}
-              </div>
-            ) : (
-              <div style={{ marginBottom: "4px" }}>
-                {pin.comment || "Click to add treatment"}
-              </div>
-            )}
-            <div
-              style={{
-                display: "flex",
-                gap: "2px",
-                flexWrap: "wrap",
-              }}
-            >
-              {!pin.treatment && (
                 <button
-                  onClick={() => setShowTreatmentForm(true)}
+                  onClick={() => setIsEditing(true)}
                   style={{
-                    background: "#8B5CF6",
+                    background: "#2196F3",
                     color: "white",
                     border: "none",
                     padding: "2px 6px",
@@ -189,41 +222,27 @@ const PinComponent: React.FC<{
                     cursor: "pointer",
                   }}
                 >
-                  Add Treatment
+                  Edit
                 </button>
-              )}
-              <button
-                onClick={() => setIsEditing(true)}
-                style={{
-                  background: "#2196F3",
-                  color: "white",
-                  border: "none",
-                  padding: "2px 6px",
-                  borderRadius: "2px",
-                  fontSize: "9px",
-                  cursor: "pointer",
-                }}
-              >
-                Edit
-              </button>
-              <button
-                onClick={() => onRemove(pin.id)}
-                style={{
-                  background: "#f44336",
-                  color: "white",
-                  border: "none",
-                  padding: "2px 6px",
-                  borderRadius: "2px",
-                  fontSize: "9px",
-                  cursor: "pointer",
-                }}
-              >
-                Remove
-              </button>
+                <button
+                  onClick={() => onRemove(pin.id)}
+                  style={{
+                    background: "#f44336",
+                    color: "white",
+                    border: "none",
+                    padding: "2px 6px",
+                    borderRadius: "2px",
+                    fontSize: "9px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Remove
+                </button>
+              </div>
             </div>
-          </div>
-        )}
-      </Html>
+          )}
+        </Html>
+      )}
 
       {/* Treatment Form */}
       <TreatmentForm

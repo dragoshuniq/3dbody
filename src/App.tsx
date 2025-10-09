@@ -7,6 +7,7 @@ import CameraControls, {
 } from "./components/CameraControls";
 import { useBodyStore } from "./store/useBodyStore";
 import { type Pin, type Treatment } from "./types/Treatment";
+import PinList from "./components/PinList";
 import "./App.css";
 
 function App() {
@@ -224,6 +225,9 @@ function App() {
           Pins: {pins.length}
         </div>
       </div>
+
+      {/* Pin List */}
+      <PinList />
 
       {/* Camera Controls */}
       <CameraControls
