@@ -28,6 +28,7 @@ export interface BodyRef {
     target: Vector3,
     distance?: number
   ) => void;
+  zoomToPin: (pinId: string) => void;
   resetCamera: () => void;
 }
 
@@ -69,7 +70,7 @@ const PinComponent: React.FC<{
     <group position={pinPosition}>
       {/* Pin sphere with treatment color */}
       <mesh onClick={handlePinClick}>
-        <sphereGeometry args={[0.02, 12, 12]} />
+        <sphereGeometry args={[0.01, 8, 8]} />
         <meshStandardMaterial
           color={pin.treatment?.color || "red"}
           emissive={
@@ -82,9 +83,8 @@ const PinComponent: React.FC<{
       {/* Pin label with comment - only show when selected */}
       {isSelected && (
         <Html
-          position={[0, 0.15, 0]}
-          center
-          distanceFactor={15}
+          position={[0.02, 0, 0]}
+          center={false}
           occlude
           style={{
             background: "rgba(0,0,0,0.9)",
@@ -92,12 +92,31 @@ const PinComponent: React.FC<{
             padding: "6px 8px",
             borderRadius: "3px",
             fontSize: "10px",
-            minWidth: "80px",
-            maxWidth: "120px",
+            width: "100px",
             wordWrap: "break-word",
             border: `1px solid ${pin.treatment?.color || "red"}`,
+            transform: "scale(1)",
+            transformOrigin: "left center",
+            pointerEvents: "auto",
+            position: "relative",
           }}
         >
+          {/* Arrow pointer to pin */}
+          <div
+            style={{
+              position: "absolute",
+              left: "-6px",
+              top: "50%",
+              transform: "translateY(-50%)",
+              width: "0",
+              height: "0",
+              borderTop: "6px solid transparent",
+              borderBottom: "6px solid transparent",
+              borderRight: `6px solid ${
+                pin.treatment?.color || "red"
+              }`,
+            }}
+          />
           {isEditing ? (
             <div>
               <textarea
@@ -379,6 +398,53 @@ const Body = forwardRef<BodyRef, BodyProps>(
             requestAnimationFrame(animationLoop);
           }
         },
+        zoomToPin: (pinId: string) => {
+          const pin = pins.find((p) => p.id === pinId);
+          if (pin && controlsRef.current) {
+            const pinPosition = new Vector3(
+              pin.position.x,
+              pin.position.y,
+              pin.position.z
+            );
+            // Calculate camera position slightly offset from the pin
+            const cameraOffset = new Vector3(0.3, 0.2, 0.3);
+            const cameraPosition = pinPosition
+              .clone()
+              .add(cameraOffset);
+
+            // Animate camera to pin position
+            const startPosition = camera.position.clone();
+            const startTarget = controlsRef.current.target.clone();
+            const duration = 1000; // 1 second
+            const startTime = performance.now();
+
+            const animate = (progress: number) => {
+              camera.position.lerpVectors(
+                startPosition,
+                cameraPosition,
+                progress
+              );
+              controlsRef.current!.target.lerpVectors(
+                startTarget,
+                pinPosition,
+                progress
+              );
+              controlsRef.current!.update();
+            };
+
+            const animationLoop = (currentTime: number) => {
+              const elapsed = currentTime - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+              animate(progress);
+
+              if (progress < 1) {
+                requestAnimationFrame(animationLoop);
+              }
+            };
+
+            requestAnimationFrame(animationLoop);
+          }
+        },
         resetCamera: () => {
           if (controlsRef.current) {
             camera.position.set(0, 0, 5);
@@ -387,7 +453,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
           }
         },
       }),
-      [camera]
+      [camera, pins]
     );
 
     return (

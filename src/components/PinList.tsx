@@ -5,9 +5,14 @@ import {
   FaEye,
   FaUser,
   FaRunning,
+  FaSearchPlus,
 } from "react-icons/fa";
 
-const PinList: React.FC = () => {
+interface PinListProps {
+  onZoomToPin: (pinId: string) => void;
+}
+
+const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
   const { pins, selectedPinId, setSelectedPin } = useBodyStore();
 
   const getAreaIcon = (area: string) => {
@@ -78,11 +83,12 @@ const PinList: React.FC = () => {
           {pins.map((pin) => (
             <div
               key={pin.id}
-              onClick={() =>
+              onClick={() => {
                 setSelectedPin(
                   pin.id === selectedPinId ? null : pin.id
-                )
-              }
+                );
+                onZoomToPin(pin.id);
+              }}
               style={{
                 background:
                   pin.id === selectedPinId
@@ -243,11 +249,16 @@ const PinList: React.FC = () => {
                   color: "#666",
                   marginTop: "8px",
                   textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: "4px",
                 }}
               >
+                <FaSearchPlus size={10} />
                 {pin.id === selectedPinId
                   ? "Click to deselect"
-                  : "Click to select"}
+                  : "Click to zoom & select"}
               </div>
             </div>
           ))}

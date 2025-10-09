@@ -93,7 +93,9 @@ function App() {
       }}
     >
       {/* Pin List - Left Sidebar */}
-      <PinList />
+      <PinList
+        onZoomToPin={(pinId) => bodyRef.current?.zoomToPin(pinId)}
+      />
 
       {/* Main Content Area */}
       <div
