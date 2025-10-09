@@ -69,7 +69,7 @@ const PinComponent: React.FC<{
     <group position={pinPosition}>
       {/* Pin sphere with treatment color */}
       <mesh onClick={handlePinClick}>
-        <sphereGeometry args={[0.15, 16, 16]} />
+        <sphereGeometry args={[0.02, 12, 12]} />
         <meshStandardMaterial
           color={pin.treatment?.color || "red"}
           emissive={
@@ -82,20 +82,20 @@ const PinComponent: React.FC<{
       {/* Pin label with comment - only show when selected */}
       {isSelected && (
         <Html
-          position={[0, 0.3, 0]}
+          position={[0, 0.15, 0]}
           center
-          distanceFactor={10}
+          distanceFactor={15}
           occlude
           style={{
             background: "rgba(0,0,0,0.9)",
             color: "white",
-            padding: "8px 12px",
-            borderRadius: "4px",
-            fontSize: "12px",
-            minWidth: "120px",
-            maxWidth: "200px",
+            padding: "6px 8px",
+            borderRadius: "3px",
+            fontSize: "10px",
+            minWidth: "80px",
+            maxWidth: "120px",
             wordWrap: "break-word",
-            border: `2px solid ${pin.treatment?.color || "red"}`,
+            border: `1px solid ${pin.treatment?.color || "red"}`,
           }}
         >
           {isEditing ? (
@@ -105,13 +105,13 @@ const PinComponent: React.FC<{
                 onChange={(e) => setComment(e.target.value)}
                 style={{
                   width: "100%",
-                  minHeight: "60px",
+                  minHeight: "30px",
                   background: "white",
                   color: "black",
                   border: "none",
                   borderRadius: "2px",
-                  padding: "4px",
-                  fontSize: "12px",
+                  padding: "2px",
+                  fontSize: "9px",
                   resize: "vertical",
                 }}
               />
@@ -128,9 +128,9 @@ const PinComponent: React.FC<{
                     background: "#4CAF50",
                     color: "white",
                     border: "none",
-                    padding: "2px 8px",
+                    padding: "1px 4px",
                     borderRadius: "2px",
-                    fontSize: "10px",
+                    fontSize: "8px",
                     cursor: "pointer",
                   }}
                 >
@@ -145,9 +145,9 @@ const PinComponent: React.FC<{
                     background: "#f44336",
                     color: "white",
                     border: "none",
-                    padding: "2px 8px",
+                    padding: "1px 4px",
                     borderRadius: "2px",
-                    fontSize: "10px",
+                    fontSize: "8px",
                     cursor: "pointer",
                   }}
                 >
@@ -160,20 +160,20 @@ const PinComponent: React.FC<{
               {pin.treatment ? (
                 <div style={{ marginBottom: "4px" }}>
                   <div
-                    style={{ fontWeight: "bold", fontSize: "11px" }}
+                    style={{ fontWeight: "bold", fontSize: "9px" }}
                   >
                     {pin.treatment.area}
                   </div>
-                  <div style={{ fontSize: "10px", color: "#ccc" }}>
+                  <div style={{ fontSize: "8px", color: "#ccc" }}>
                     {pin.treatment.treatment} - {pin.treatment.dosage}
                   </div>
-                  <div style={{ fontSize: "10px", color: "#ccc" }}>
+                  <div style={{ fontSize: "8px", color: "#ccc" }}>
                     ${pin.treatment.cost} - {pin.treatment.date}
                   </div>
                   {pin.treatment.notes && (
                     <div
                       style={{
-                        fontSize: "9px",
+                        fontSize: "7px",
                         color: "#aaa",
                         marginTop: "2px",
                       }}
@@ -201,9 +201,9 @@ const PinComponent: React.FC<{
                       background: "#8B5CF6",
                       color: "white",
                       border: "none",
-                      padding: "2px 6px",
+                      padding: "1px 3px",
                       borderRadius: "2px",
-                      fontSize: "9px",
+                      fontSize: "7px",
                       cursor: "pointer",
                     }}
                   >
@@ -216,9 +216,9 @@ const PinComponent: React.FC<{
                     background: "#2196F3",
                     color: "white",
                     border: "none",
-                    padding: "2px 6px",
+                    padding: "1px 3px",
                     borderRadius: "2px",
-                    fontSize: "9px",
+                    fontSize: "7px",
                     cursor: "pointer",
                   }}
                 >
@@ -230,9 +230,9 @@ const PinComponent: React.FC<{
                     background: "#f44336",
                     color: "white",
                     border: "none",
-                    padding: "2px 6px",
+                    padding: "1px 3px",
                     borderRadius: "2px",
-                    fontSize: "9px",
+                    fontSize: "7px",
                     cursor: "pointer",
                   }}
                 >

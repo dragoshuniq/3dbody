@@ -91,12 +91,12 @@ interface BodyState {
   }) => void;
   resetCamera: () => void;
   clearAllPins: () => void;
+  initializePins: () => void;
 }
 
 export const useBodyStore = create<BodyState>()(
   persist(
-    (set) => ({
-      // Initial state
+    (set, get) => ({
       pins: initialPins,
       isAddingPin: false,
       selectedPinId: null,
@@ -145,6 +145,14 @@ export const useBodyStore = create<BodyState>()(
         }),
 
       clearAllPins: () => set({ pins: [] }),
+
+      // Initialize pins if empty
+      initializePins: () => {
+        const currentState = get();
+        if (currentState.pins.length === 0) {
+          set({ pins: initialPins });
+        }
+      },
     }),
     {
       name: "body3d-storage",
@@ -153,6 +161,12 @@ export const useBodyStore = create<BodyState>()(
         cameraPosition: state.cameraPosition,
         cameraTarget: state.cameraTarget,
       }),
+      onRehydrateStorage: () => (state) => {
+        // Initialize pins if they're empty after rehydration
+        if (state && state.pins.length === 0) {
+          state.pins = initialPins;
+        }
+      },
     }
   )
 );

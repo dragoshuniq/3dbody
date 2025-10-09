@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useRef, useEffect } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
 import Body, { type BodyRef } from "./components/Body";
@@ -20,10 +20,16 @@ function App() {
     updateTreatment,
     removePin,
     clearAllPins,
+    initializePins,
   } = useBodyStore();
 
   const cameraControlsRef = useRef<CameraControlsRef>(null);
   const bodyRef = useRef<BodyRef>(null);
+
+  // Initialize pins on component mount
+  useEffect(() => {
+    initializePins();
+  }, [initializePins]);
 
   const handleAddPin = useCallback(
     (pin: Pin) => {
@@ -222,9 +228,26 @@ function App() {
               cursor: "pointer",
               fontSize: "12px",
               width: "100%",
+              marginBottom: "10px",
             }}
           >
             Clear All Pins
+          </button>
+
+          <button
+            onClick={initializePins}
+            style={{
+              background: "#9C27B0",
+              color: "white",
+              border: "none",
+              padding: "8px 12px",
+              borderRadius: "4px",
+              cursor: "pointer",
+              fontSize: "12px",
+              width: "100%",
+            }}
+          >
+            Load Demo Pins
           </button>
 
           <div
