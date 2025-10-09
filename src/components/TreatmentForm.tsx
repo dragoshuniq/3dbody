@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { Vector3 } from "three";
 import { FaTimes, FaSave, FaMapMarkerAlt } from "react-icons/fa";
 import type { Treatment } from "../types/Treatment";
+import dayjs from "dayjs";
 
 interface TreatmentFormProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
     area: "",
     treatment: "",
     dosage: "",
-    date: new Date().toISOString().split("T")[0],
+    date: dayjs().format("YYYY-MM-DD"),
     cost: 0,
     color: "#8B5CF6", // Default purple color
     notes: "",
@@ -108,7 +109,7 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
       area: "",
       treatment: "",
       dosage: "",
-      date: new Date().toISOString().split("T")[0],
+      date: dayjs().format("YYYY-MM-DD"),
       cost: 0,
       color: "#8B5CF6",
       notes: "",

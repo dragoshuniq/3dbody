@@ -12,6 +12,7 @@ import * as THREE from "three";
 import { type Pin, type Treatment } from "../types/Treatment";
 import TreatmentForm from "./TreatmentForm";
 import { useBodyStore } from "../store/useBodyStore";
+import dayjs from "dayjs";
 
 interface BodyProps {
   pins: Pin[];
@@ -187,7 +188,8 @@ const PinComponent: React.FC<{
                     {pin.treatment.treatment} - {pin.treatment.dosage}
                   </div>
                   <div style={{ fontSize: "8px", color: "#ccc" }}>
-                    ${pin.treatment.cost} - {pin.treatment.date}
+                    ${pin.treatment.cost} -{" "}
+                    {dayjs(pin.treatment.date).format("MMM DD, YYYY")}
                   </div>
                   {pin.treatment.notes && (
                     <div

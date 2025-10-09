@@ -30,11 +30,7 @@ const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
   };
 
   const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "short",
-      day: "numeric",
-    });
+    return dayjs(dateString).format("MMM DD, YYYY");
   };
 
   return (

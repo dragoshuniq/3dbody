@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type Pin, type Treatment } from "../types/Treatment";
+import dayjs from "dayjs";
 
 // 3 Dummy treatment data with visible positions
 const dummyTreatments: Treatment[] = [
@@ -10,7 +11,7 @@ const dummyTreatments: Treatment[] = [
     area: "Face",
     treatment: "Botox Cosmetic",
     dosage: "15 U",
-    date: "2024-11-05",
+    date: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
     cost: 450,
     color: "#8B5CF6",
     position: { x: 0, y: 1.5, z: 0.1 },
@@ -22,7 +23,7 @@ const dummyTreatments: Treatment[] = [
     area: "Chest",
     treatment: "Juvederm Voluma",
     dosage: "2.5 mL",
-    date: "2024-10-15",
+    date: dayjs().subtract(2, "month").format("YYYY-MM-DD"),
     cost: 750,
     color: "#F59E0B",
     position: { x: 0, y: 0.5, z: 0.1 },
@@ -34,7 +35,7 @@ const dummyTreatments: Treatment[] = [
     area: "Legs",
     treatment: "Sculptra",
     dosage: "5 mL",
-    date: "2024-09-20",
+    date: dayjs().subtract(3, "month").format("YYYY-MM-DD"),
     cost: 1200,
     color: "#10B981",
     position: { x: 0, y: -1, z: 0.1 },
@@ -46,7 +47,7 @@ const dummyTreatments: Treatment[] = [
     area: "Test",
     treatment: "Test Treatment",
     dosage: "1 U",
-    date: "2024-01-01",
+    date: dayjs().subtract(6, "month").format("YYYY-MM-DD"),
     cost: 100,
     color: "#ff0000",
     position: { x: 0, y: 0, z: 0.5 },
