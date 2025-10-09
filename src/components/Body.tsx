@@ -1,41 +1,67 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, {
+  useRef,
+  useState,
+  useCallback,
+  forwardRef,
+  useImperativeHandle,
+} from "react";
 import { useThree } from "@react-three/fiber";
 import { OrbitControls, useFBX, Html } from "@react-three/drei";
 import { Group, Vector3 } from "three";
 import * as THREE from "three";
-
-interface Pin {
-  id: string;
-  position: Vector3;
-  comment: string;
-}
+import { type Pin, type Treatment } from "../types/Treatment";
+import TreatmentForm from "./TreatmentForm";
 
 interface BodyProps {
   pins: Pin[];
   onAddPin: (pin: Pin) => void;
   onUpdatePin: (id: string, comment: string) => void;
   onRemovePin: (id: string) => void;
+  onUpdateTreatment: (id: string, treatment: Treatment) => void;
+  isAddingPin: boolean;
+}
+
+export interface BodyRef {
+  zoomToPosition: (
+    position: Vector3,
+    target: Vector3,
+    distance?: number
+  ) => void;
+  resetCamera: () => void;
 }
 
 const PinComponent: React.FC<{
   pin: Pin;
   onUpdateComment: (id: string, comment: string) => void;
   onRemove: (id: string) => void;
-}> = ({ pin, onUpdateComment, onRemove }) => {
+  onUpdateTreatment: (id: string, treatment: Treatment) => void;
+}> = ({ pin, onUpdateComment, onRemove, onUpdateTreatment }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [comment, setComment] = useState(pin.comment);
+  const [showTreatmentForm, setShowTreatmentForm] = useState(false);
 
   const handleSave = () => {
     onUpdateComment(pin.id, comment);
     setIsEditing(false);
   };
 
+  const handleSaveTreatment = (treatment: Treatment) => {
+    onUpdateTreatment(pin.id, treatment);
+    setShowTreatmentForm(false);
+  };
+
+  const pinPosition = new Vector3(
+    pin.position.x,
+    pin.position.y,
+    pin.position.z
+  );
+
   return (
-    <group position={pin.position}>
-      {/* Red pin sphere */}
+    <group position={pinPosition}>
+      {/* Pin sphere with treatment color */}
       <mesh>
         <sphereGeometry args={[0.1, 16, 16]} />
-        <meshStandardMaterial color="red" />
+        <meshStandardMaterial color={pin.treatment?.color || "red"} />
       </mesh>
 
       {/* Pin label with comment */}
@@ -114,10 +140,57 @@ const PinComponent: React.FC<{
           </div>
         ) : (
           <div>
-            <div style={{ marginBottom: "4px" }}>
-              {pin.comment || "Click to add comment"}
-            </div>
-            <div style={{ display: "flex", gap: "4px" }}>
+            {pin.treatment ? (
+              <div style={{ marginBottom: "4px" }}>
+                <div style={{ fontWeight: "bold", fontSize: "11px" }}>
+                  {pin.treatment.area}
+                </div>
+                <div style={{ fontSize: "10px", color: "#ccc" }}>
+                  {pin.treatment.treatment} - {pin.treatment.dosage}
+                </div>
+                <div style={{ fontSize: "10px", color: "#ccc" }}>
+                  ${pin.treatment.cost} - {pin.treatment.date}
+                </div>
+                {pin.treatment.notes && (
+                  <div
+                    style={{
+                      fontSize: "9px",
+                      color: "#aaa",
+                      marginTop: "2px",
+                    }}
+                  >
+                    {pin.treatment.notes}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ marginBottom: "4px" }}>
+                {pin.comment || "Click to add treatment"}
+              </div>
+            )}
+            <div
+              style={{
+                display: "flex",
+                gap: "2px",
+                flexWrap: "wrap",
+              }}
+            >
+              {!pin.treatment && (
+                <button
+                  onClick={() => setShowTreatmentForm(true)}
+                  style={{
+                    background: "#8B5CF6",
+                    color: "white",
+                    border: "none",
+                    padding: "2px 6px",
+                    borderRadius: "2px",
+                    fontSize: "9px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Add Treatment
+                </button>
+              )}
               <button
                 onClick={() => setIsEditing(true)}
                 style={{
@@ -126,7 +199,7 @@ const PinComponent: React.FC<{
                   border: "none",
                   padding: "2px 6px",
                   borderRadius: "2px",
-                  fontSize: "10px",
+                  fontSize: "9px",
                   cursor: "pointer",
                 }}
               >
@@ -140,7 +213,7 @@ const PinComponent: React.FC<{
                   border: "none",
                   padding: "2px 6px",
                   borderRadius: "2px",
-                  fontSize: "10px",
+                  fontSize: "9px",
                   cursor: "pointer",
                 }}
               >
@@ -150,104 +223,187 @@ const PinComponent: React.FC<{
           </div>
         )}
       </Html>
+
+      {/* Treatment Form */}
+      <TreatmentForm
+        isOpen={showTreatmentForm}
+        onClose={() => setShowTreatmentForm(false)}
+        onSave={handleSaveTreatment}
+        pinPosition={pinPosition}
+        pinId={pin.id}
+      />
     </group>
   );
 };
 
-const Body: React.FC<BodyProps> = ({
-  pins,
-  onAddPin,
-  onUpdatePin,
-  onRemovePin,
-}) => {
-  const groupRef = useRef<Group>(null);
-  const fbx = useFBX("/dude.fbx");
-  const { camera, raycaster, mouse } = useThree();
-  const [isAddingPin, setIsAddingPin] = useState(false);
-
-  // Handle mouse clicks to add pins
-  const handleClick = useCallback(
-    (event: MouseEvent) => {
-      if (!isAddingPin) return;
-
-      event.stopPropagation();
-
-      // Update mouse position
-      mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-      // Cast ray from camera through mouse position
-      raycaster.setFromCamera(mouse, camera);
-
-      // Find intersection with the FBX model
-      const intersects = raycaster.intersectObject(fbx, true);
-
-      if (intersects.length > 0) {
-        const point = intersects[0].point;
-        const newPin: Pin = {
-          id: Date.now().toString(),
-          position: point.clone(),
-          comment: "",
-        };
-        onAddPin(newPin);
-        setIsAddingPin(false);
-      }
+const Body = forwardRef<BodyRef, BodyProps>(
+  (
+    {
+      pins,
+      onAddPin,
+      onUpdatePin,
+      onRemovePin,
+      onUpdateTreatment,
+      isAddingPin,
     },
-    [isAddingPin, mouse, raycaster, camera, fbx, onAddPin]
-  );
+    ref
+  ) => {
+    const groupRef = useRef<Group>(null);
+    const controlsRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const fbx = useFBX("/dude.fbx");
+    const { camera, raycaster, mouse } = useThree();
 
-  // Add event listener for clicks
-  React.useEffect(() => {
-    const canvas = document.querySelector("canvas");
-    if (canvas) {
-      canvas.addEventListener("click", handleClick);
-      return () => canvas.removeEventListener("click", handleClick);
-    }
-  }, [handleClick]);
+    // Handle mouse clicks to add pins
+    const handleClick = useCallback(
+      (event: MouseEvent) => {
+        if (!isAddingPin) return;
 
-  // Scale and position the FBX model appropriately
-  React.useEffect(() => {
-    if (fbx) {
-      // Scale the model to a reasonable size
-      fbx.scale.setScalar(0.01);
-      // Center the model
-      const box = new THREE.Box3().setFromObject(fbx);
-      const center = box.getCenter(new THREE.Vector3());
-      fbx.position.sub(center);
-    }
-  }, [fbx]);
+        event.stopPropagation();
 
-  return (
-    <>
-      {/* FBX Model */}
-      <primitive object={fbx} ref={groupRef} />
+        // Update mouse position
+        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
+        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-      {/* Pins */}
-      {pins.map((pin) => (
-        <PinComponent
-          key={pin.id}
-          pin={pin}
-          onUpdateComment={onUpdatePin}
-          onRemove={onRemovePin}
+        // Cast ray from camera through mouse position
+        raycaster.setFromCamera(mouse, camera);
+
+        // Find intersection with the FBX model
+        const intersects = raycaster.intersectObject(fbx, true);
+
+        if (intersects.length > 0) {
+          const point = intersects[0].point;
+          const newPin: Pin = {
+            id: Date.now().toString(),
+            position: {
+              x: point.x,
+              y: point.y,
+              z: point.z,
+            },
+            comment: "",
+          };
+          onAddPin(newPin);
+        }
+      },
+      [isAddingPin, mouse, raycaster, camera, fbx, onAddPin]
+    );
+
+    // Add event listener for clicks
+    React.useEffect(() => {
+      const canvas = document.querySelector("canvas");
+      if (canvas) {
+        canvas.addEventListener("click", handleClick);
+        return () => canvas.removeEventListener("click", handleClick);
+      }
+    }, [handleClick]);
+
+    // Scale and position the FBX model appropriately
+    React.useEffect(() => {
+      if (fbx) {
+        // Scale the model to a reasonable size
+        fbx.scale.setScalar(0.01);
+        // Center the model
+        const box = new THREE.Box3().setFromObject(fbx);
+        const center = box.getCenter(new THREE.Vector3());
+        fbx.position.sub(center);
+      }
+    }, [fbx]);
+
+    // Expose camera control functions
+    useImperativeHandle(
+      ref,
+      () => ({
+        zoomToPosition: (
+          position: Vector3,
+          target: Vector3,
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          _distance: number = 2
+        ) => {
+          if (controlsRef.current) {
+            // Animate camera to new position
+            const startPosition = camera.position.clone();
+            const startTarget = controlsRef.current.target.clone();
+
+            // Create animation
+            const animate = (progress: number) => {
+              camera.position.lerpVectors(
+                startPosition,
+                position,
+                progress
+              );
+              controlsRef.current.target.lerpVectors(
+                startTarget,
+                target,
+                progress
+              );
+              controlsRef.current.update();
+            };
+
+            // Simple animation loop
+            let startTime: number;
+            const duration = 1000; // 1 second
+
+            const animationLoop = (currentTime: number) => {
+              if (!startTime) startTime = currentTime;
+              const elapsed = currentTime - startTime;
+              const progress = Math.min(elapsed / duration, 1);
+
+              animate(progress);
+
+              if (progress < 1) {
+                requestAnimationFrame(animationLoop);
+              }
+            };
+
+            requestAnimationFrame(animationLoop);
+          }
+        },
+        resetCamera: () => {
+          if (controlsRef.current) {
+            camera.position.set(0, 0, 5);
+            controlsRef.current.target.set(0, 0, 0);
+            controlsRef.current.update();
+          }
+        },
+      }),
+      [camera]
+    );
+
+    return (
+      <>
+        {/* FBX Model */}
+        <primitive object={fbx} ref={groupRef} />
+
+        {/* Pins */}
+        {pins.map((pin) => (
+          <PinComponent
+            key={pin.id}
+            pin={pin}
+            onUpdateComment={onUpdatePin}
+            onRemove={onRemovePin}
+            onUpdateTreatment={onUpdateTreatment}
+          />
+        ))}
+
+        {/* Lighting */}
+        <ambientLight intensity={0.4} />
+        <directionalLight position={[10, 10, 5]} intensity={1} />
+        <directionalLight position={[-10, -10, -5]} intensity={0.5} />
+
+        {/* Camera Controls */}
+        <OrbitControls
+          ref={controlsRef}
+          enablePan={true}
+          enableZoom={true}
+          enableRotate={true}
+          minDistance={0.5}
+          maxDistance={20}
+          maxPolarAngle={Math.PI / 2}
         />
-      ))}
+      </>
+    );
+  }
+);
 
-      {/* Lighting */}
-      <ambientLight intensity={0.4} />
-      <directionalLight position={[10, 10, 5]} intensity={1} />
-      <directionalLight position={[-10, -10, -5]} intensity={0.5} />
-
-      {/* Camera Controls */}
-      <OrbitControls
-        enablePan={true}
-        enableZoom={true}
-        enableRotate={true}
-        minDistance={2}
-        maxDistance={20}
-        maxPolarAngle={Math.PI / 2}
-      />
-    </>
-  );
-};
+Body.displayName = "Body";
 
 export default Body;

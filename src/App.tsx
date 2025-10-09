@@ -1,18 +1,18 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
-import Body from "./components/Body";
+import Body, { type BodyRef } from "./components/Body";
+import CameraControls, {
+  type CameraControlsRef,
+} from "./components/CameraControls";
+import { type Pin, type Treatment } from "./types/Treatment";
 import "./App.css";
-
-interface Pin {
-  id: string;
-  position: Vector3;
-  comment: string;
-}
 
 function App() {
   const [pins, setPins] = useState<Pin[]>([]);
   const [isAddingPin, setIsAddingPin] = useState(false);
+  const cameraControlsRef = useRef<CameraControlsRef>(null);
+  const bodyRef = useRef<BodyRef>(null);
 
   const handleAddPin = useCallback((pin: Pin) => {
     setPins((prev) => [...prev, pin]);
@@ -28,6 +28,17 @@ function App() {
     []
   );
 
+  const handleUpdateTreatment = useCallback(
+    (id: string, treatment: Treatment) => {
+      setPins((prev) =>
+        prev.map((pin) =>
+          pin.id === id ? { ...pin, treatment } : pin
+        )
+      );
+    },
+    []
+  );
+
   const handleRemovePin = useCallback((id: string) => {
     setPins((prev) => prev.filter((pin) => pin.id !== id));
   }, []);
@@ -35,12 +46,9 @@ function App() {
   const handleSavePins = useCallback(() => {
     const pinsData = pins.map((pin) => ({
       id: pin.id,
-      position: {
-        x: pin.position.x,
-        y: pin.position.y,
-        z: pin.position.z,
-      },
+      position: pin.position,
       comment: pin.comment,
+      treatment: pin.treatment,
     }));
 
     // Save to localStorage
@@ -57,14 +65,12 @@ function App() {
           id: string;
           position: { x: number; y: number; z: number };
           comment: string;
+          treatment?: Treatment;
         }) => ({
           id: pin.id,
-          position: new Vector3(
-            pin.position.x,
-            pin.position.y,
-            pin.position.z
-          ),
+          position: pin.position,
           comment: pin.comment,
+          treatment: pin.treatment,
         })
       );
       setPins(loadedPins);
@@ -79,6 +85,15 @@ function App() {
       setPins([]);
     }
   }, []);
+
+  const handleCameraChange = useCallback(
+    (position: Vector3, target: Vector3) => {
+      if (bodyRef.current) {
+        bodyRef.current.zoomToPosition(position, target);
+      }
+    },
+    []
+  );
 
   return (
     <div
@@ -137,7 +152,7 @@ function App() {
 
         <div style={{ marginBottom: "15px" }}>
           <h3 style={{ margin: "0 0 10px 0", fontSize: "14px" }}>
-            Controls:
+            Mouse Controls:
           </h3>
           <ul
             style={{
@@ -150,6 +165,16 @@ function App() {
             <li>Right click + drag: Pan</li>
             <li>Scroll: Zoom in/out</li>
           </ul>
+          <p
+            style={{
+              fontSize: "11px",
+              margin: "8px 0 0 0",
+              color: "#ccc",
+            }}
+          >
+            Use the camera controls on the right to zoom to specific
+            body parts
+          </p>
         </div>
 
         <div
@@ -218,16 +243,25 @@ function App() {
         </div>
       </div>
 
+      {/* Camera Controls */}
+      <CameraControls
+        ref={cameraControlsRef}
+        onCameraChange={handleCameraChange}
+      />
+
       {/* 3D Canvas */}
       <Canvas
         camera={{ position: [0, 0, 5], fov: 50 }}
         style={{ background: "#f0f0f0" }}
       >
         <Body
+          ref={bodyRef}
           pins={pins}
           onAddPin={handleAddPin}
           onUpdatePin={handleUpdatePin}
           onRemovePin={handleRemovePin}
+          onUpdateTreatment={handleUpdateTreatment}
+          isAddingPin={isAddingPin}
         />
       </Canvas>
     </div>
