@@ -2,9 +2,9 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { type Pin, type Treatment } from "../types/Treatment";
 
-// 3 Dummy treatment data with exact positions
+// 3 Dummy treatment data with visible positions
 const dummyTreatments: Treatment[] = [
-  // Face treatment
+  // Face treatment - positioned on the face area
   {
     id: "treatment-1",
     area: "Face",
@@ -13,10 +13,10 @@ const dummyTreatments: Treatment[] = [
     date: "2024-11-05",
     cost: 450,
     color: "#8B5CF6",
-    position: { x: -0.025, y: 1.739, z: 0.55 },
+    position: { x: 0, y: 1.5, z: 0.1 },
     notes: "Facial rejuvenation treatment",
   },
-  // Chest treatment
+  // Chest treatment - positioned on the chest area
   {
     id: "treatment-2",
     area: "Chest",
@@ -25,10 +25,10 @@ const dummyTreatments: Treatment[] = [
     date: "2024-10-15",
     cost: 750,
     color: "#F59E0B",
-    position: { x: -0.021, y: 1.277, z: 0.836 },
+    position: { x: 0, y: 0.5, z: 0.1 },
     notes: "Chest contouring and enhancement",
   },
-  // Legs treatment
+  // Legs treatment - positioned on the legs area
   {
     id: "treatment-3",
     area: "Legs",
@@ -37,8 +37,20 @@ const dummyTreatments: Treatment[] = [
     date: "2024-09-20",
     cost: 1200,
     color: "#10B981",
-    position: { x: -0.002, y: 0.555, z: 1.532 },
+    position: { x: 0, y: -1, z: 0.1 },
     notes: "Leg contouring and volume restoration",
+  },
+  // Test pin at center to verify visibility
+  {
+    id: "test-pin",
+    area: "Test",
+    treatment: "Test Treatment",
+    dosage: "1 U",
+    date: "2024-01-01",
+    cost: 100,
+    color: "#ff0000",
+    position: { x: 0, y: 0, z: 0.5 },
+    notes: "Test pin to verify visibility",
   },
 ];
 
@@ -83,7 +95,7 @@ interface BodyState {
 
 export const useBodyStore = create<BodyState>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       // Initial state
       pins: initialPins,
       isAddingPin: false,

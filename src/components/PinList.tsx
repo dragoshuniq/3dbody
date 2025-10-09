@@ -34,17 +34,13 @@ const PinList: React.FC = () => {
   return (
     <div
       style={{
-        position: "absolute",
-        top: "20px",
-        left: "20px",
-        zIndex: 100,
+        width: "250px",
+        height: "100vh",
         background: "rgba(0,0,0,0.9)",
         color: "white",
         padding: "20px",
-        borderRadius: "8px",
-        minWidth: "300px",
-        maxHeight: "80vh",
         overflowY: "auto",
+        borderRight: "1px solid rgba(255,255,255,0.2)",
       }}
     >
       <h2
