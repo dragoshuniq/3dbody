@@ -83,7 +83,7 @@ const PinComponent: React.FC<{
       {/* Pin label with comment - only show when selected */}
       {isSelected && (
         <Html
-          position={[0.02, 0, 0]}
+          position={[0.02, 0.02, 0]}
           center={false}
           occlude
           style={{
@@ -105,14 +105,14 @@ const PinComponent: React.FC<{
           <div
             style={{
               position: "absolute",
-              left: "-6px",
+              left: "-4px",
               top: "50%",
               transform: "translateY(-50%)",
               width: "0",
               height: "0",
-              borderTop: "6px solid transparent",
-              borderBottom: "6px solid transparent",
-              borderRight: `6px solid ${
+              borderTop: "4px solid transparent",
+              borderBottom: "4px solid transparent",
+              borderRight: `4px solid ${
                 pin.treatment?.color || "red"
               }`,
             }}
