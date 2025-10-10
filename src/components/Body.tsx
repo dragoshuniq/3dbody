@@ -42,6 +42,13 @@ const PinComponent: React.FC<{
   const [isEditing, setIsEditing] = useState(false);
   const [comment, setComment] = useState(pin.comment);
   const [showTreatmentForm, setShowTreatmentForm] = useState(false);
+
+  // Auto-show treatment form for new pins without treatment
+  React.useEffect(() => {
+    if (!pin.treatment && pin.comment === "") {
+      setShowTreatmentForm(true);
+    }
+  }, [pin.treatment, pin.comment]);
   const { selectedPinId, setSelectedPin } = useBodyStore();
 
   const isSelected = selectedPinId === pin.id;
@@ -232,7 +239,7 @@ const PinComponent: React.FC<{
                   </button>
                 )}
                 <button
-                  onClick={() => setIsEditing(true)}
+                  onClick={() => setShowTreatmentForm(true)}
                   style={{
                     background: "#2196F3",
                     color: "white",
@@ -243,7 +250,21 @@ const PinComponent: React.FC<{
                     cursor: "pointer",
                   }}
                 >
-                  Edit
+                  Edit Treatment
+                </button>
+                <button
+                  onClick={() => setIsEditing(true)}
+                  style={{
+                    background: "#FF9800",
+                    color: "white",
+                    border: "none",
+                    padding: "1px 3px",
+                    borderRadius: "2px",
+                    fontSize: "7px",
+                    cursor: "pointer",
+                  }}
+                >
+                  Edit Comment
                 </button>
                 <button
                   onClick={() => onRemove(pin.id)}

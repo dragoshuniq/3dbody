@@ -3,7 +3,7 @@ import { persist } from "zustand/middleware";
 import { type Pin, type Treatment } from "../types/Treatment";
 import dayjs from "dayjs";
 
-// 3 Dummy treatment data with visible positions
+// 3 Dummy treatment data with visible positions for 0.5 scale model
 const dummyTreatments: Treatment[] = [
   // Face treatment - positioned on the face area
   {
@@ -14,7 +14,7 @@ const dummyTreatments: Treatment[] = [
     date: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
     cost: 450,
     color: "#8B5CF6",
-    position: { x: 0, y: 1.5, z: 0.1 },
+    position: { x: 0, y: 75, z: 10 },
     notes: "Facial rejuvenation treatment",
   },
   // Chest treatment - positioned on the chest area
@@ -26,7 +26,7 @@ const dummyTreatments: Treatment[] = [
     date: dayjs().subtract(2, "month").format("YYYY-MM-DD"),
     cost: 750,
     color: "#F59E0B",
-    position: { x: 0, y: 0.5, z: 0.1 },
+    position: { x: 0, y: 25, z: 10 },
     notes: "Chest contouring and enhancement",
   },
   // Legs treatment - positioned on the legs area
@@ -38,20 +38,8 @@ const dummyTreatments: Treatment[] = [
     date: dayjs().subtract(3, "month").format("YYYY-MM-DD"),
     cost: 1200,
     color: "#10B981",
-    position: { x: 0, y: -1, z: 0.1 },
+    position: { x: 0, y: -50, z: 10 },
     notes: "Leg contouring and volume restoration",
-  },
-  // Test pin at center to verify visibility
-  {
-    id: "test-pin",
-    area: "Test",
-    treatment: "Test Treatment",
-    dosage: "1 U",
-    date: dayjs().subtract(6, "month").format("YYYY-MM-DD"),
-    cost: 100,
-    color: "#ff0000",
-    position: { x: 0, y: 0, z: 0.5 },
-    notes: "Test pin to verify visibility",
   },
 ];
 
