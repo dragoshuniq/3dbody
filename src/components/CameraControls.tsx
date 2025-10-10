@@ -1,5 +1,4 @@
 import React, {
-  useRef,
   forwardRef,
   useImperativeHandle,
   useState,
@@ -41,7 +40,7 @@ interface CameraControlsProps {
 const CameraControls = forwardRef<
   CameraControlsRef,
   CameraControlsProps
->(({ onCameraChange, onPositionUpdate }, ref) => {
+>(({ onCameraChange }, ref) => {
   const {
     cameraPosition,
     cameraTarget,

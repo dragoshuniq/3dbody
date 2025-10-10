@@ -1,6 +1,7 @@
-import { useCallback, useRef, useEffect } from "react";
-import { Canvas } from "@react-three/fiber";
+import { useCallback, useRef, useEffect, useState } from "react";
+import { Canvas, useThree } from "@react-three/fiber";
 import { Vector3 } from "three";
+import * as THREE from "three";
 import Body, { type BodyRef } from "./components/Body";
 import CameraControls, {
   type CameraControlsRef,
@@ -8,6 +9,7 @@ import CameraControls, {
 import { useBodyStore } from "./store/useBodyStore";
 import { type Pin, type Treatment } from "./types/Treatment";
 import PinList from "./components/PinList";
+import TreatmentForm from "./components/TreatmentForm";
 import "./App.css";
 
 function App() {
@@ -22,6 +24,12 @@ function App() {
     clearAllPins,
     initializePins,
   } = useBodyStore();
+
+  // Treatment form state
+  const [treatmentFormOpen, setTreatmentFormOpen] = useState(false);
+  const [selectedPinId, setSelectedPinId] = useState<string | null>(
+    null
+  );
 
   const cameraControlsRef = useRef<CameraControlsRef>(null);
   const bodyRef = useRef<BodyRef>(null);
@@ -43,13 +51,6 @@ function App() {
       updatePin(id, comment);
     },
     [updatePin]
-  );
-
-  const handleUpdateTreatment = useCallback(
-    (id: string, treatment: Treatment) => {
-      updateTreatment(id, treatment);
-    },
-    [updateTreatment]
   );
 
   const handleRemovePin = useCallback(
@@ -83,6 +84,78 @@ function App() {
     },
     []
   );
+
+  const handleOpenTreatmentForm = useCallback((pinId: string) => {
+    setSelectedPinId(pinId);
+    setTreatmentFormOpen(true);
+  }, []);
+
+  const handleCloseTreatmentForm = useCallback(() => {
+    setTreatmentFormOpen(false);
+    setSelectedPinId(null);
+  }, []);
+
+  const handleSaveTreatment = useCallback(
+    (treatment: Treatment) => {
+      if (selectedPinId) {
+        updateTreatment(selectedPinId, treatment);
+      }
+      handleCloseTreatmentForm();
+    },
+    [selectedPinId, updateTreatment, handleCloseTreatmentForm]
+  );
+
+  // Component to handle pointer missed events with access to camera
+  const PointerMissedHandler = () => {
+    const { camera } = useThree();
+
+    const handlePointerMissed = useCallback(
+      (event: MouseEvent) => {
+        if (!isAddingPin) return;
+
+        // Convert screen coordinates to normalized device coordinates (-1 to +1)
+        const x = (event.clientX / window.innerWidth) * 2 - 1;
+        const y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        // Create a vector and unproject it to 3D space
+        const vector = new THREE.Vector3(x, y, 0.5);
+        vector.unproject(camera);
+
+        // Calculate direction from camera to the unprojected point
+        const direction = vector.sub(camera.position).normalize();
+
+        // Set a distance from the camera to place the object
+        const distance = 10;
+        const position = camera.position
+          .clone()
+          .add(direction.multiplyScalar(distance));
+
+        const newPin: Pin = {
+          id: Date.now().toString(),
+          position: {
+            x: position.x,
+            y: position.y,
+            z: position.z,
+          },
+          comment: "",
+        };
+        addPin(newPin);
+      },
+      [camera]
+    );
+
+    // Attach the event handler to the canvas
+    useEffect(() => {
+      const canvas = document.querySelector("canvas");
+      if (canvas) {
+        canvas.addEventListener("click", handlePointerMissed);
+        return () =>
+          canvas.removeEventListener("click", handlePointerMissed);
+      }
+    }, [handlePointerMissed]);
+
+    return null;
+  };
 
   return (
     <div
@@ -274,17 +347,38 @@ function App() {
           camera={{ position: [0, 25, 190], fov: 50 }}
           style={{ background: "#f0f0f0", flex: 1 }}
         >
+          <PointerMissedHandler />
           <Body
             ref={bodyRef}
             pins={pins}
             onAddPin={handleAddPin}
             onUpdatePin={handleUpdatePin}
             onRemovePin={handleRemovePin}
-            onUpdateTreatment={handleUpdateTreatment}
             isAddingPin={isAddingPin}
+            onOpenTreatmentForm={handleOpenTreatmentForm}
           />
         </Canvas>
       </div>
+
+      {/* Treatment Form - Outside 3D scene */}
+      {treatmentFormOpen && selectedPinId && (
+        <TreatmentForm
+          isOpen={treatmentFormOpen}
+          onClose={handleCloseTreatmentForm}
+          onSave={handleSaveTreatment}
+          pinPosition={
+            new Vector3(
+              pins.find((p) => p.id === selectedPinId)?.position.x ||
+                0,
+              pins.find((p) => p.id === selectedPinId)?.position.y ||
+                0,
+              pins.find((p) => p.id === selectedPinId)?.position.z ||
+                0
+            )
+          }
+          pinId={selectedPinId}
+        />
+      )}
     </div>
   );
 }

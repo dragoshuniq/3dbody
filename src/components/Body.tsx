@@ -9,8 +9,7 @@ import { useThree } from "@react-three/fiber";
 import { OrbitControls, useFBX, Html } from "@react-three/drei";
 import { Group, Vector3 } from "three";
 import * as THREE from "three";
-import { type Pin, type Treatment } from "../types/Treatment";
-import TreatmentForm from "./TreatmentForm";
+import { type Pin } from "../types/Treatment";
 import { useBodyStore } from "../store/useBodyStore";
 import dayjs from "dayjs";
 
@@ -19,8 +18,8 @@ interface BodyProps {
   onAddPin: (pin: Pin) => void;
   onUpdatePin: (id: string, comment: string) => void;
   onRemovePin: (id: string) => void;
-  onUpdateTreatment: (id: string, treatment: Treatment) => void;
   isAddingPin: boolean;
+  onOpenTreatmentForm: (pinId: string) => void;
 }
 
 export interface BodyRef {
@@ -37,18 +36,17 @@ const PinComponent: React.FC<{
   pin: Pin;
   onUpdateComment: (id: string, comment: string) => void;
   onRemove: (id: string) => void;
-  onUpdateTreatment: (id: string, treatment: Treatment) => void;
-}> = ({ pin, onUpdateComment, onRemove, onUpdateTreatment }) => {
+  onOpenTreatmentForm: (pinId: string) => void;
+}> = ({ pin, onUpdateComment, onRemove, onOpenTreatmentForm }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [comment, setComment] = useState(pin.comment);
-  const [showTreatmentForm, setShowTreatmentForm] = useState(false);
 
   // Auto-show treatment form for new pins without treatment
   React.useEffect(() => {
     if (!pin.treatment && pin.comment === "") {
-      setShowTreatmentForm(true);
+      onOpenTreatmentForm(pin.id);
     }
-  }, [pin.treatment, pin.comment]);
+  }, [pin.treatment, pin.comment, pin.id, onOpenTreatmentForm]);
   const { selectedPinId, setSelectedPin } = useBodyStore();
 
   const isSelected = selectedPinId === pin.id;
@@ -56,11 +54,6 @@ const PinComponent: React.FC<{
   const handleSave = () => {
     onUpdateComment(pin.id, comment);
     setIsEditing(false);
-  };
-
-  const handleSaveTreatment = (treatment: Treatment) => {
-    onUpdateTreatment(pin.id, treatment);
-    setShowTreatmentForm(false);
   };
 
   const pinPosition = new Vector3(
@@ -224,7 +217,7 @@ const PinComponent: React.FC<{
               >
                 {!pin.treatment && (
                   <button
-                    onClick={() => setShowTreatmentForm(true)}
+                    onClick={() => onOpenTreatmentForm(pin.id)}
                     style={{
                       background: "#8B5CF6",
                       color: "white",
@@ -239,7 +232,7 @@ const PinComponent: React.FC<{
                   </button>
                 )}
                 <button
-                  onClick={() => setShowTreatmentForm(true)}
+                  onClick={() => onOpenTreatmentForm(pin.id)}
                   style={{
                     background: "#2196F3",
                     color: "white",
@@ -285,15 +278,6 @@ const PinComponent: React.FC<{
           )}
         </Html>
       )}
-
-      {/* Treatment Form */}
-      <TreatmentForm
-        isOpen={showTreatmentForm}
-        onClose={() => setShowTreatmentForm(false)}
-        onSave={handleSaveTreatment}
-        pinPosition={pinPosition}
-        pinId={pin.id}
-      />
     </group>
   );
 };
@@ -305,8 +289,8 @@ const Body = forwardRef<BodyRef, BodyProps>(
       onAddPin,
       onUpdatePin,
       onRemovePin,
-      onUpdateTreatment,
       isAddingPin,
+      onOpenTreatmentForm,
     },
     ref
   ) => {
@@ -582,7 +566,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
             pin={pin}
             onUpdateComment={onUpdatePin}
             onRemove={onRemovePin}
-            onUpdateTreatment={onUpdateTreatment}
+            onOpenTreatmentForm={onOpenTreatmentForm}
           />
         ))}
 
