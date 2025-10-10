@@ -12,6 +12,42 @@ interface TreatmentFormProps {
   pinId: string;
 }
 
+const treatmentOptions = [
+  "Botox Cosmetic",
+  "Juvederm Voluma",
+  "Juvederm Volift",
+  "Juvederm Ultra",
+  "Restylane",
+  "Sculptra",
+  "Radiesse",
+  "Belotero",
+  "Other",
+];
+
+const areaOptions = [
+  "Forehead",
+  "Glabella",
+  "Crows Feet",
+  "Cheeks",
+  "Chin",
+  "Lip",
+  "Nasolabial Folds",
+  "Marionette Lines",
+  "Jawline",
+  "Neck",
+  "Other",
+];
+
+const colorOptions = [
+  { name: "Botox (Purple)", value: "#8B5CF6" },
+  { name: "Juvederm (Orange)", value: "#F59E0B" },
+  { name: "Restylane (Blue)", value: "#3B82F6" },
+  { name: "Sculptra (Green)", value: "#10B981" },
+  { name: "Radiesse (Red)", value: "#EF4444" },
+  { name: "Belotero (Pink)", value: "#EC4899" },
+  { name: "Custom", value: "#6B7280" },
+];
+
 const TreatmentForm: React.FC<TreatmentFormProps> = ({
   isOpen,
   onClose,
@@ -28,42 +64,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
     color: "#8B5CF6", // Default purple color
     notes: "",
   });
-
-  const treatmentOptions = [
-    "Botox Cosmetic",
-    "Juvederm Voluma",
-    "Juvederm Volift",
-    "Juvederm Ultra",
-    "Restylane",
-    "Sculptra",
-    "Radiesse",
-    "Belotero",
-    "Other",
-  ];
-
-  const areaOptions = [
-    "Forehead",
-    "Glabella",
-    "Crows Feet",
-    "Cheeks",
-    "Chin",
-    "Lip",
-    "Nasolabial Folds",
-    "Marionette Lines",
-    "Jawline",
-    "Neck",
-    "Other",
-  ];
-
-  const colorOptions = [
-    { name: "Botox (Purple)", value: "#8B5CF6" },
-    { name: "Juvederm (Orange)", value: "#F59E0B" },
-    { name: "Restylane (Blue)", value: "#3B82F6" },
-    { name: "Sculptra (Green)", value: "#10B981" },
-    { name: "Radiesse (Red)", value: "#EF4444" },
-    { name: "Belotero (Pink)", value: "#EC4899" },
-    { name: "Custom", value: "#6B7280" },
-  ];
 
   const handleInputChange = (
     e: React.ChangeEvent<
