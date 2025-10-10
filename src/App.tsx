@@ -271,7 +271,7 @@ function App() {
 
         {/* 3D Canvas */}
         <Canvas
-          camera={{ position: [0, 0, 5], fov: 50 }}
+          camera={{ position: [0, 25, 190], fov: 50 }}
           style={{ background: "#f0f0f0", flex: 1 }}
         >
           <Body

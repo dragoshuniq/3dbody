@@ -53,15 +53,15 @@ const CameraControls = forwardRef<
   const [editTarget, setEditTarget] = useState(cameraTarget);
   const cameraPresets = {
     face: {
-      position: new Vector3(-0.025, 1.739, 0.55),
-      target: new Vector3(-0.078, 1.698, -0.163),
+      position: new Vector3(0.252, 63.931, 16.428),
+      target: new Vector3(0.252, 60.718, -7.989),
       label: "Face",
       icon: FaEye,
       color: "#4CAF50",
     },
     chest: {
-      position: new Vector3(-0.021, 1.277, 0.836),
-      target: new Vector3(-0.093, 1.221, -0.134),
+      position: new Vector3(-0.318, 49.728, 20.98),
+      target: new Vector3(-0.318, 46.168, -6.075),
       label: "Chest",
       icon: FaUser,
       color: "#2196F3",
@@ -74,22 +74,22 @@ const CameraControls = forwardRef<
       color: "#9C27B0",
     },
     hands: {
-      position: new Vector3(1.5, 0.5, 1),
-      target: new Vector3(1.5, 0.5, 0),
+      position: new Vector3(28.749, 55.998, 24.734),
+      target: new Vector3(28.749, 51.846, -6.822),
       label: "Hands",
       icon: FaHands,
       color: "#FF9800",
     },
     heart: {
-      position: new Vector3(0.3, 0.3, 1.5),
-      target: new Vector3(0.3, 0.3, 0),
+      position: new Vector3(28.749, 55.998, 24.734),
+      target: new Vector3(28.749, 51.846, -6.822),
       label: "Heart",
       icon: FaHeart,
       color: "#f44336",
     },
     head: {
-      position: new Vector3(0, 2, 1),
-      target: new Vector3(0, 2, 0),
+      position: new Vector3(0.788, 85.571, -2.316),
+      target: new Vector3(0.788, 64.456, -2.316),
       label: "Head",
       icon: FaBrain,
       color: "#607D8B",
@@ -102,8 +102,8 @@ const CameraControls = forwardRef<
       color: "#00BCD4",
     },
     spine: {
-      position: new Vector3(0.1, 0, 2),
-      target: new Vector3(0.1, 0, 0),
+      position: new Vector3(-0.329, 44.125, -31.328),
+      target: new Vector3(0.746, 44.125, -4.061),
       label: "Spine",
       icon: FaBone,
       color: "#795548",
@@ -128,11 +128,11 @@ const CameraControls = forwardRef<
   };
 
   const handleResetCamera = () => {
-    const position = new Vector3(0, 0, 5);
-    const target = new Vector3(0, 0, 0);
+    const position = new Vector3(0, 25, 190); // Default camera position
+    const target = new Vector3(0, 25, 0); // Default camera target
     onCameraChange(position, target);
-    updateCameraPosition({ x: 0, y: 0, z: 5 });
-    updateCameraTarget({ x: 0, y: 0, z: 0 });
+    updateCameraPosition({ x: 0, y: 25, z: 190 });
+    updateCameraTarget({ x: 0, y: 25, z: 0 });
   };
 
   const handleSavePosition = () => {

@@ -101,8 +101,8 @@ export const useBodyStore = create<BodyState>()(
       pins: initialPins,
       isAddingPin: false,
       selectedPinId: null,
-      cameraPosition: { x: 0, y: 0, z: 5 },
-      cameraTarget: { x: 0, y: 0, z: 0 },
+      cameraPosition: { x: 0, y: 25, z: 190 },
+      cameraTarget: { x: 0, y: 25, z: 0 },
 
       // Actions
       addPin: (pin) =>
@@ -141,8 +141,8 @@ export const useBodyStore = create<BodyState>()(
 
       resetCamera: () =>
         set({
-          cameraPosition: { x: 0, y: 0, z: 5 },
-          cameraTarget: { x: 0, y: 0, z: 0 },
+          cameraPosition: { x: 0, y: 25, z: 190 },
+          cameraTarget: { x: 0, y: 25, z: 0 },
         }),
 
       clearAllPins: () => set({ pins: [] }),

@@ -292,29 +292,66 @@ const Body = forwardRef<BodyRef, BodyProps>(
     const groupRef = useRef<Group>(null);
     const controlsRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
     const fbx = useFBX("/dude.fbx");
-    const { camera, raycaster, mouse } = useThree();
+    const { camera, raycaster, pointer } = useThree();
     const { updateCameraPosition, updateCameraTarget } =
       useBodyStore();
 
     // Handle mouse clicks to add pins
     const handleClick = useCallback(
       (event: MouseEvent) => {
-        if (!isAddingPin) return;
+        if (!isAddingPin || !fbx) return;
 
         event.stopPropagation();
 
-        // Update mouse position
-        mouse.x = (event.clientX / window.innerWidth) * 2 - 1;
-        mouse.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        // Update pointer position
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // Cast ray from camera through mouse position
-        raycaster.setFromCamera(mouse, camera);
+        // Cast ray from camera through pointer position
+        raycaster.setFromCamera(pointer, camera);
 
-        // Find intersection with the FBX model
-        const intersects = raycaster.intersectObject(fbx, true);
+        // Try multiple intersection approaches for better reliability
+        let intersects: THREE.Intersection[] = [];
+
+        // First try: intersect with the main FBX object
+        intersects = raycaster.intersectObject(fbx, true);
+        console.log("Main FBX intersects:", intersects.length);
+
+        // Second try: if no intersection, try with all children
+        if (intersects.length === 0) {
+          intersects = raycaster.intersectObjects(fbx.children, true);
+          console.log("Children intersects:", intersects.length);
+        }
+
+        // Third try: if still no intersection, try with all meshes in the scene
+        if (intersects.length === 0) {
+          const allMeshes: THREE.Mesh[] = [];
+          fbx.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              allMeshes.push(child);
+              console.log("Mesh details:", {
+                name: child.name,
+                visible: child.visible,
+                position: child.position,
+                scale: child.scale,
+                geometry: child.geometry,
+                material: child.material,
+              });
+            }
+          });
+          console.log("Found meshes:", allMeshes.length);
+          intersects = raycaster.intersectObjects(allMeshes, true);
+          console.log("Meshes intersects:", intersects.length);
+
+          // Debug ray information
+          console.log("Ray origin:", raycaster.ray.origin);
+          console.log("Ray direction:", raycaster.ray.direction);
+          console.log("Pointer position:", pointer);
+        }
 
         if (intersects.length > 0) {
           const point = intersects[0].point;
+          console.log("Pin added at:", point);
           const newPin: Pin = {
             id: Date.now().toString(),
             position: {
@@ -325,9 +362,17 @@ const Body = forwardRef<BodyRef, BodyProps>(
             comment: "",
           };
           onAddPin(newPin);
+        } else {
+          console.log("No intersection found - raycasting failed");
+          console.log("FBX position:", fbx.position);
+          console.log("FBX scale:", fbx.scale);
+          console.log(
+            "FBX bounding box:",
+            new THREE.Box3().setFromObject(fbx)
+          );
         }
       },
-      [isAddingPin, mouse, raycaster, camera, fbx, onAddPin]
+      [isAddingPin, pointer, raycaster, camera, fbx, onAddPin]
     );
 
     // Add event listener for clicks
@@ -342,12 +387,58 @@ const Body = forwardRef<BodyRef, BodyProps>(
     // Scale and position the FBX model appropriately
     React.useEffect(() => {
       if (fbx) {
-        // Scale the model to a reasonable size
-        fbx.scale.setScalar(0.01);
+        console.log("FBX loaded, current scale:", fbx.scale);
+
+        // Scale the model to a reasonable size for raycasting
+        fbx.scale.setScalar(0.5); // Moderate scale for better raycasting
+        console.log("FBX scale set to:", fbx.scale);
+
         // Center the model
         const box = new THREE.Box3().setFromObject(fbx);
         const center = box.getCenter(new THREE.Vector3());
         fbx.position.sub(center);
+        console.log("FBX centered at:", fbx.position);
+
+        // Ensure all meshes are raycastable
+        fbx.traverse((child) => {
+          if (child instanceof THREE.Mesh) {
+            // Ensure the mesh is visible and raycastable
+            child.visible = true;
+            child.castShadow = true;
+            child.receiveShadow = true;
+
+            // Make sure geometry is properly set up for raycasting
+            if (child.geometry) {
+              child.geometry.computeBoundingBox();
+              child.geometry.computeBoundingSphere();
+
+              // Ensure the geometry has proper attributes
+              if (!child.geometry.attributes.position) {
+                console.warn(
+                  "Mesh has no position attribute:",
+                  child.name
+                );
+              }
+
+              // Force update the matrix
+              child.updateMatrix();
+              child.updateMatrixWorld(true);
+            }
+
+            // Ensure material is properly set up
+            if (child.material) {
+              child.material.side = THREE.DoubleSide; // Make sure both sides are raycastable
+            }
+          }
+        });
+
+        // Force update the FBX matrix
+        fbx.updateMatrix();
+        fbx.updateMatrixWorld(true);
+
+        console.log("FBX model loaded and prepared for raycasting");
+        console.log("Final FBX scale:", fbx.scale);
+        console.log("Final FBX position:", fbx.position);
       }
     }, [fbx]);
 
@@ -486,7 +577,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
           enableZoom={true}
           enableRotate={true}
           minDistance={0.5}
-          maxDistance={20}
+          maxDistance={200}
           maxPolarAngle={Math.PI / 2}
           onChange={() => {
             if (controlsRef.current) {
