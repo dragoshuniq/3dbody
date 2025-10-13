@@ -26,7 +26,7 @@ const dummyTreatments: Treatment[] = [
     date: dayjs().subtract(2, "month").format("YYYY-MM-DD"),
     cost: 750,
     color: "#F59E0B",
-    position: { x: 0, y: 50, z: 4 },
+    position: { x: 0, y: 50, z: 4.1 },
     notes: "Chest contouring and enhancement",
   },
   // Legs treatment - positioned on the legs area
