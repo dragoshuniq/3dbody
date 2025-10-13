@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Vector3 } from "three";
 import { FaTimes, FaSave, FaMapMarkerAlt } from "react-icons/fa";
 import type { Treatment } from "../types/Treatment";
@@ -10,6 +10,7 @@ interface TreatmentFormProps {
   onSave: (treatment: Treatment) => void;
   pinPosition: Vector3;
   pinId: string;
+  existingTreatment?: Treatment;
 }
 
 const treatmentOptions = [
@@ -25,6 +26,9 @@ const treatmentOptions = [
 ];
 
 const areaOptions = [
+  "Face",
+  "Chest",
+  "Legs",
   "Forehead",
   "Glabella",
   "Crows Feet",
@@ -54,16 +58,43 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
   onSave,
   pinPosition,
   pinId,
+  existingTreatment,
 }) => {
   const [formData, setFormData] = useState({
-    area: "",
-    treatment: "",
-    dosage: "",
-    date: dayjs().format("YYYY-MM-DD"),
-    cost: 0,
-    color: "#8B5CF6", // Default purple color
-    notes: "",
+    area: existingTreatment?.area || "",
+    treatment: existingTreatment?.treatment || "",
+    dosage: existingTreatment?.dosage || "",
+    date: existingTreatment?.date || dayjs().format("YYYY-MM-DD"),
+    cost: existingTreatment?.cost || 0,
+    color: existingTreatment?.color || "#8B5CF6", // Default purple color
+    notes: existingTreatment?.notes || "",
   });
+
+  // Update form data when existingTreatment changes
+  useEffect(() => {
+    if (existingTreatment) {
+      setFormData({
+        area: existingTreatment.area || "",
+        treatment: existingTreatment.treatment || "",
+        dosage: existingTreatment.dosage || "",
+        date: existingTreatment.date || dayjs().format("YYYY-MM-DD"),
+        cost: existingTreatment.cost || 0,
+        color: existingTreatment.color || "#8B5CF6",
+        notes: existingTreatment.notes || "",
+      });
+    } else {
+      // Reset to defaults when no existing treatment
+      setFormData({
+        area: "",
+        treatment: "",
+        dosage: "",
+        date: dayjs().format("YYYY-MM-DD"),
+        cost: 0,
+        color: "#8B5CF6",
+        notes: "",
+      });
+    }
+  }, [existingTreatment]);
 
   const handleInputChange = (
     e: React.ChangeEvent<

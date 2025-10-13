@@ -356,6 +356,7 @@ function App() {
             onRemovePin={handleRemovePin}
             isAddingPin={isAddingPin}
             onOpenTreatmentForm={handleOpenTreatmentForm}
+            treatmentFormOpen={treatmentFormOpen}
           />
         </Canvas>
       </div>
@@ -377,6 +378,9 @@ function App() {
             )
           }
           pinId={selectedPinId}
+          existingTreatment={
+            pins.find((p) => p.id === selectedPinId)?.treatment
+          }
         />
       )}
     </div>

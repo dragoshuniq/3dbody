@@ -20,6 +20,7 @@ interface BodyProps {
   onRemovePin: (id: string) => void;
   isAddingPin: boolean;
   onOpenTreatmentForm: (pinId: string) => void;
+r  treatmentFormOpen: boolean;
 }
 
 export interface BodyRef {
@@ -37,7 +38,14 @@ const PinComponent: React.FC<{
   onUpdateComment: (id: string, comment: string) => void;
   onRemove: (id: string) => void;
   onOpenTreatmentForm: (pinId: string) => void;
-}> = ({ pin, onUpdateComment, onRemove, onOpenTreatmentForm }) => {
+  treatmentFormOpen: boolean;
+}> = ({
+  pin,
+  onUpdateComment,
+  onRemove,
+  onOpenTreatmentForm,
+  treatmentFormOpen,
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [comment, setComment] = useState(pin.comment);
 
@@ -95,8 +103,8 @@ const PinComponent: React.FC<{
         />
       </mesh>
 
-      {/* Pin label with comment - only show when selected */}
-      {isSelected && (
+      {/* Pin label with comment - only show when selected and treatment form is not open */}
+      {isSelected && !treatmentFormOpen && (
         <Html
           position={[0.3, 0.55, 0]}
           center={false}
@@ -307,6 +315,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
       onRemovePin,
       isAddingPin,
       onOpenTreatmentForm,
+      treatmentFormOpen,
     },
     ref
   ) => {
@@ -583,6 +592,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
             onUpdateComment={onUpdatePin}
             onRemove={onRemovePin}
             onOpenTreatmentForm={onOpenTreatmentForm}
+            treatmentFormOpen={treatmentFormOpen}
           />
         ))}
 
