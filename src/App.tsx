@@ -25,7 +25,6 @@ function App() {
     initializePins,
   } = useBodyStore();
 
-  // Treatment form state
   const [treatmentFormOpen, setTreatmentFormOpen] = useState(false);
   const [selectedPinId, setSelectedPinId] = useState<string | null>(
     null
@@ -34,7 +33,6 @@ function App() {
   const cameraControlsRef = useRef<CameraControlsRef>(null);
   const bodyRef = useRef<BodyRef>(null);
 
-  // Initialize pins on component mount
   useEffect(() => {
     initializePins();
   }, [initializePins]);
@@ -61,12 +59,10 @@ function App() {
   );
 
   const handleSavePins = useCallback(() => {
-    // Data is automatically saved by Zustand persist middleware
     alert("Pins saved successfully!");
   }, []);
 
   const handleLoadPins = useCallback(() => {
-    // Data is automatically loaded by Zustand persist middleware
     alert("Pins loaded successfully!");
   }, []);
 
@@ -105,7 +101,6 @@ function App() {
     [selectedPinId, updateTreatment, handleCloseTreatmentForm]
   );
 
-  // Component to handle pointer missed events with access to camera
   const PointerMissedHandler = () => {
     const { camera } = useThree();
 
@@ -113,18 +108,14 @@ function App() {
       (event: MouseEvent) => {
         if (!isAddingPin) return;
 
-        // Convert screen coordinates to normalized device coordinates (-1 to +1)
         const x = (event.clientX / window.innerWidth) * 2 - 1;
         const y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // Create a vector and unproject it to 3D space
         const vector = new THREE.Vector3(x, y, 0.5);
         vector.unproject(camera);
 
-        // Calculate direction from camera to the unprojected point
         const direction = vector.sub(camera.position).normalize();
 
-        // Set a distance from the camera to place the object
         const distance = 10;
         const position = camera.position
           .clone()
@@ -144,7 +135,6 @@ function App() {
       [camera]
     );
 
-    // Attach the event handler to the canvas
     useEffect(() => {
       const canvas = document.querySelector("canvas");
       if (canvas) {
@@ -165,12 +155,10 @@ function App() {
         height: "100vh",
       }}
     >
-      {/* Pin List - Left Sidebar */}
       <PinList
         onZoomToPin={(pinId) => bodyRef.current?.zoomToPin(pinId)}
       />
 
-      {/* Main Content Area */}
       <div
         style={{
           flex: 1,
@@ -179,7 +167,6 @@ function App() {
           flexDirection: "column",
         }}
       >
-        {/* Control Panel */}
         <div
           style={{
             position: "absolute",
@@ -336,13 +323,11 @@ function App() {
           </div>
         </div>
 
-        {/* Camera Controls */}
         <CameraControls
           ref={cameraControlsRef}
           onCameraChange={handleCameraChange}
         />
 
-        {/* 3D Canvas */}
         <Canvas
           camera={{ position: [0, 25, 190], fov: 50 }}
           style={{ background: "#f0f0f0", flex: 1 }}
@@ -361,7 +346,6 @@ function App() {
         </Canvas>
       </div>
 
-      {/* Treatment Form - Outside 3D scene */}
       {treatmentFormOpen && selectedPinId && (
         <TreatmentForm
           isOpen={treatmentFormOpen}

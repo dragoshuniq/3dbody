@@ -49,7 +49,6 @@ const PinComponent: React.FC<{
   const [isEditing, setIsEditing] = useState(false);
   const [comment, setComment] = useState(pin.comment);
 
-  // Auto-show treatment form for new pins without treatment
   React.useEffect(() => {
     if (!pin.treatment && pin.comment === "") {
       onOpenTreatmentForm(pin.id);
@@ -59,7 +58,6 @@ const PinComponent: React.FC<{
 
   const isSelected = selectedPinId === pin.id;
 
-  // Debug logging
   React.useEffect(() => {
     console.log(`Pin ${pin.id} selection state:`, {
       isSelected,
@@ -91,7 +89,6 @@ const PinComponent: React.FC<{
 
   return (
     <group position={pinPosition}>
-      {/* Pin sphere with treatment color */}
       <mesh onClick={handlePinClick}>
         <sphereGeometry args={[0.25, 32, 32]} />
         <meshStandardMaterial
@@ -103,7 +100,6 @@ const PinComponent: React.FC<{
         />
       </mesh>
 
-      {/* Pin label with comment - only show when selected and treatment form is not open */}
       {isSelected && !treatmentFormOpen && (
         <Html
           position={[0.3, 0.55, 0]}
@@ -126,7 +122,6 @@ const PinComponent: React.FC<{
             boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
           }}
         >
-          {/* Arrow pointer to pin */}
           <div
             style={{
               position: "absolute",
@@ -320,40 +315,33 @@ const Body = forwardRef<BodyRef, BodyProps>(
     ref
   ) => {
     const groupRef = useRef<Group>(null);
-    const controlsRef = useRef<any>(null); // eslint-disable-line @typescript-eslint/no-explicit-any
+    const controlsRef = useRef<any>(null);
     const fbx = useFBX("/dude.fbx");
     const { camera, raycaster, pointer } = useThree();
     const { updateCameraPosition, updateCameraTarget } =
       useBodyStore();
 
-    // Handle mouse clicks to add pins
     const handleClick = useCallback(
       (event: MouseEvent) => {
         if (!isAddingPin || !fbx) return;
 
         event.stopPropagation();
 
-        // Update pointer position
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
 
-        // Cast ray from camera through pointer position
         raycaster.setFromCamera(pointer, camera);
 
-        // Try multiple intersection approaches for better reliability
         let intersects: THREE.Intersection[] = [];
 
-        // First try: intersect with the main FBX object
         intersects = raycaster.intersectObject(fbx, true);
         console.log("Main FBX intersects:", intersects.length);
 
-        // Second try: if no intersection, try with all children
         if (intersects.length === 0) {
           intersects = raycaster.intersectObjects(fbx.children, true);
           console.log("Children intersects:", intersects.length);
         }
 
-        // Third try: if still no intersection, try with all meshes in the scene
         if (intersects.length === 0) {
           const allMeshes: THREE.Mesh[] = [];
           fbx.traverse((child) => {
@@ -373,7 +361,6 @@ const Body = forwardRef<BodyRef, BodyProps>(
           intersects = raycaster.intersectObjects(allMeshes, true);
           console.log("Meshes intersects:", intersects.length);
 
-          // Debug ray information
           console.log("Ray origin:", raycaster.ray.origin);
           console.log("Ray direction:", raycaster.ray.direction);
           console.log("Pointer position:", pointer);
@@ -405,7 +392,6 @@ const Body = forwardRef<BodyRef, BodyProps>(
       [isAddingPin, pointer, raycaster, camera, fbx, onAddPin]
     );
 
-    // Add event listener for clicks
     React.useEffect(() => {
       const canvas = document.querySelector("canvas");
       if (canvas) {
@@ -414,30 +400,24 @@ const Body = forwardRef<BodyRef, BodyProps>(
       }
     }, [handleClick]);
 
-    // Scale and position the FBX model appropriately
     React.useEffect(() => {
       if (fbx) {
         console.log("FBX loaded, current scale:", fbx.scale);
 
-        // Scale the model to a reasonable size for raycasting
-        fbx.scale.setScalar(0.5); // Moderate scale for better raycasting
+        fbx.scale.setScalar(0.5);
         console.log("FBX scale set to:", fbx.scale);
 
-        // Center the model
         const box = new THREE.Box3().setFromObject(fbx);
         const center = box.getCenter(new THREE.Vector3());
         fbx.position.sub(center);
         console.log("FBX centered at:", fbx.position);
 
-        // Ensure all meshes are raycastable
         fbx.traverse((child) => {
           if (child instanceof THREE.Mesh) {
-            // Ensure the mesh is visible and raycastable
             child.visible = true;
             child.castShadow = true;
             child.receiveShadow = true;
 
-            // Make sure geometry is properly set up for raycasting
             if (child.geometry) {
               child.geometry.computeBoundingBox();
               child.geometry.computeBoundingSphere();
