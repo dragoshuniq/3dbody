@@ -529,11 +529,25 @@ const Body = forwardRef<BodyRef, BodyProps>(
               pin.position.y,
               pin.position.z
             );
-            // Calculate camera position slightly offset from the pin
-            const cameraOffset = new Vector3(0.3, 0.2, 0.3);
-            const cameraPosition = pinPosition
-              .clone()
-              .add(cameraOffset);
+
+            // Calculate camera position based on pin location for better viewing
+            // For pins on the front of the body, position camera in front
+            // For pins on the back, position camera behind
+            const distance = 5; // Distance from pin (increased for zoom out)
+            const height = 2; // Height above pin (increased for better overview)
+
+            // Determine camera position based on pin's Z position
+            // Positive Z = front of body, Negative Z = back of body
+            const cameraZ =
+              pinPosition.z > 0
+                ? pinPosition.z + distance // Front of body - camera in front
+                : pinPosition.z - distance; // Back of body - camera behind
+
+            const cameraPosition = new Vector3(
+              pinPosition.x, // Keep same X position
+              pinPosition.y + height, // Elevate camera
+              cameraZ // Position based on body orientation
+            );
 
             // Animate camera to pin position
             const startPosition = camera.position.clone();
