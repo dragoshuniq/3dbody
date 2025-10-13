@@ -71,7 +71,7 @@ const PinComponent: React.FC<{
     <group position={pinPosition}>
       {/* Pin sphere with treatment color */}
       <mesh onClick={handlePinClick}>
-        <sphereGeometry args={[0.01, 8, 8]} />
+        <sphereGeometry args={[0.25, 32, 32]} />
         <meshStandardMaterial
           color={pin.treatment?.color || "red"}
           emissive={
