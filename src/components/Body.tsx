@@ -20,7 +20,7 @@ interface BodyProps {
   onRemovePin: (id: string) => void;
   isAddingPin: boolean;
   onOpenTreatmentForm: (pinId: string) => void;
-r  treatmentFormOpen: boolean;
+  treatmentFormOpen: boolean;
 }
 
 export interface BodyRef {
