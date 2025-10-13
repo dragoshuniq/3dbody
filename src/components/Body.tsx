@@ -51,6 +51,14 @@ const PinComponent: React.FC<{
 
   const isSelected = selectedPinId === pin.id;
 
+  // Debug logging
+  React.useEffect(() => {
+    console.log(`Pin ${pin.id} selection state:`, {
+      isSelected,
+      selectedPinId,
+    });
+  }, [isSelected, selectedPinId, pin.id]);
+
   const handleSave = () => {
     onUpdateComment(pin.id, comment);
     setIsEditing(false);
@@ -64,6 +72,12 @@ const PinComponent: React.FC<{
 
   const handlePinClick = (e: React.MouseEvent) => {
     e.stopPropagation();
+    console.log(
+      "Pin clicked:",
+      pin.id,
+      "Currently selected:",
+      isSelected
+    );
     setSelectedPin(isSelected ? null : pin.id);
   };
 
@@ -84,22 +98,24 @@ const PinComponent: React.FC<{
       {/* Pin label with comment - only show when selected */}
       {isSelected && (
         <Html
-          position={[0.02, 0.02, 0]}
+          position={[0.3, 0.55, 0]}
           center={false}
-          occlude
+          distanceFactor={10}
           style={{
             background: "rgba(0,0,0,0.9)",
             color: "white",
-            padding: "6px 8px",
-            borderRadius: "3px",
-            fontSize: "10px",
-            width: "100px",
+            padding: "8px 12px",
+            borderRadius: "6px",
+            fontSize: "12px",
+            width: "150px",
             wordWrap: "break-word",
-            border: `1px solid ${pin.treatment?.color || "red"}`,
+            border: `2px solid ${pin.treatment?.color || "red"}`,
             transform: "scale(1)",
             transformOrigin: "left center",
             pointerEvents: "auto",
             position: "relative",
+            zIndex: 1000,
+            boxShadow: "0 4px 8px rgba(0,0,0,0.3)",
           }}
         >
           {/* Arrow pointer to pin */}
