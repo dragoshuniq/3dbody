@@ -14,7 +14,7 @@ const dummyTreatments: Treatment[] = [
     date: dayjs().subtract(1, "month").format("YYYY-MM-DD"),
     cost: 450,
     color: "#8B5CF6",
-    position: { x: 0, y: 75, z: 10 },
+    position: { x: 0, y: 65, z: 5 },
     notes: "Facial rejuvenation treatment",
   },
   // Chest treatment - positioned on the chest area
