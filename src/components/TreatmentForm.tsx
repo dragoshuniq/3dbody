@@ -70,7 +70,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
     notes: existingTreatment?.notes || "",
   });
 
-  // Update form data when existingTreatment changes
   useEffect(() => {
     if (existingTreatment) {
       setFormData({
@@ -83,7 +82,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
         notes: existingTreatment.notes || "",
       });
     } else {
-      // Reset to defaults when no existing treatment
       setFormData({
         area: "",
         treatment: "",
@@ -215,7 +213,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
 
         <form onSubmit={handleSubmit}>
           <div style={{ display: "grid", gap: "16px" }}>
-            {/* Area */}
             <div>
               <label
                 style={{
@@ -250,7 +247,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
               </select>
             </div>
 
-            {/* Treatment */}
             <div>
               <label
                 style={{
@@ -285,7 +281,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
               </select>
             </div>
 
-            {/* Dosage */}
             <div>
               <label
                 style={{
@@ -315,7 +310,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
               />
             </div>
 
-            {/* Date */}
             <div>
               <label
                 style={{
@@ -344,7 +338,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
               />
             </div>
 
-            {/* Cost */}
             <div>
               <label
                 style={{
@@ -376,7 +369,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
               />
             </div>
 
-            {/* Color */}
             <div>
               <label
                 style={{
@@ -429,7 +421,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
               </div>
             </div>
 
-            {/* Notes */}
             <div>
               <label
                 style={{
@@ -460,7 +451,6 @@ const TreatmentForm: React.FC<TreatmentFormProps> = ({
             </div>
           </div>
 
-          {/* Buttons */}
           <div
             style={{
               display: "flex",

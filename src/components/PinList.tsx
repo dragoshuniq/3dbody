@@ -114,7 +114,6 @@ const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
                 }
               }}
             >
-              {/* Pin indicator */}
               <div
                 style={{
                   position: "absolute",
@@ -128,7 +127,6 @@ const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
                 }}
               />
 
-              {/* Area and icon */}
               <div
                 style={{
                   display: "flex",
@@ -149,7 +147,6 @@ const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
                 </span>
               </div>
 
-              {/* Treatment details */}
               {pin.treatment && (
                 <div style={{ marginBottom: "8px" }}>
                   <div
@@ -191,7 +188,6 @@ const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
                 </div>
               )}
 
-              {/* Position coordinates */}
               <div
                 style={{
                   fontSize: "10px",
@@ -205,7 +201,6 @@ const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
                 {pin.position.z.toFixed(3)})
               </div>
 
-              {/* Notes */}
               {pin.treatment?.notes && (
                 <div
                   style={{
@@ -222,7 +217,6 @@ const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
                 </div>
               )}
 
-              {/* Comment */}
               {pin.comment && (
                 <div
                   style={{
@@ -239,7 +233,6 @@ const PinList: React.FC<PinListProps> = ({ onZoomToPin }) => {
                 </div>
               )}
 
-              {/* Click instruction */}
               <div
                 style={{
                   fontSize: "10px",

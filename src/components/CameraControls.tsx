@@ -109,7 +109,6 @@ const CameraControls = forwardRef<
     },
   };
 
-  // Update edit values when store values change
   useEffect(() => {
     setEditPosition(cameraPosition);
     setEditTarget(cameraTarget);
@@ -201,7 +200,6 @@ const CameraControls = forwardRef<
         Camera Controls
       </h3>
 
-      {/* Real-time Position Display */}
       <div
         style={{
           background: "rgba(255,255,255,0.1)",
@@ -263,7 +261,6 @@ const CameraControls = forwardRef<
         </div>
       </div>
 
-      {/* Manual Position Editor */}
       {isEditing && (
         <div
           style={{

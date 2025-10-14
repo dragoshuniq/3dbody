@@ -10,6 +10,10 @@ import { useBodyStore } from "./store/useBodyStore";
 import { type Pin, type Treatment } from "./types/Treatment";
 import PinList from "./components/PinList";
 import TreatmentForm from "./components/TreatmentForm";
+import PrintButton from "./components/PrintButton";
+import CanvasCapture, {
+  type CanvasCaptureRef,
+} from "./components/CanvasCapture";
 import "./App.css";
 
 function App() {
@@ -32,6 +36,7 @@ function App() {
 
   const cameraControlsRef = useRef<CameraControlsRef>(null);
   const bodyRef = useRef<BodyRef>(null);
+  const canvasCaptureRef = useRef<CanvasCaptureRef>(null);
 
   useEffect(() => {
     initializePins();
@@ -307,10 +312,21 @@ function App() {
               cursor: "pointer",
               fontSize: "12px",
               width: "100%",
+              marginBottom: "10px",
             }}
           >
             Load Demo Pins
           </button>
+
+          <PrintButton
+            onZoomToPin={(pinId) => bodyRef.current?.zoomToPin(pinId)}
+            onCaptureCanvas={async () => {
+              if (canvasCaptureRef.current) {
+                return await canvasCaptureRef.current.captureCanvas();
+              }
+              throw new Error("Canvas capture not available");
+            }}
+          />
 
           <div
             style={{
@@ -343,6 +359,7 @@ function App() {
             onOpenTreatmentForm={handleOpenTreatmentForm}
             treatmentFormOpen={treatmentFormOpen}
           />
+          <CanvasCapture ref={canvasCaptureRef} />
         </Canvas>
       </div>
 

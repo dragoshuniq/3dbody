@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { useThree } from "@react-three/fiber";
 import { OrbitControls, useFBX, Html } from "@react-three/drei";
+import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Group, Vector3 } from "three";
 import * as THREE from "three";
 import { type Pin } from "../types/Treatment";
@@ -315,7 +316,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
     ref
   ) => {
     const groupRef = useRef<Group>(null);
-    const controlsRef = useRef<any>(null);
+    const controlsRef = useRef<OrbitControlsImpl>(null);
     const fbx = useFBX("/dude.fbx");
     const { camera, raycaster, pointer } = useThree();
     const { updateCameraPosition, updateCameraTarget } =
@@ -422,7 +423,6 @@ const Body = forwardRef<BodyRef, BodyProps>(
               child.geometry.computeBoundingBox();
               child.geometry.computeBoundingSphere();
 
-              // Ensure the geometry has proper attributes
               if (!child.geometry.attributes.position) {
                 console.warn(
                   "Mesh has no position attribute:",
@@ -430,19 +430,16 @@ const Body = forwardRef<BodyRef, BodyProps>(
                 );
               }
 
-              // Force update the matrix
               child.updateMatrix();
               child.updateMatrixWorld(true);
             }
 
-            // Ensure material is properly set up
             if (child.material) {
               child.material.side = THREE.DoubleSide; // Make sure both sides are raycastable
             }
           }
         });
 
-        // Force update the FBX matrix
         fbx.updateMatrix();
         fbx.updateMatrixWorld(true);
 
@@ -452,37 +449,32 @@ const Body = forwardRef<BodyRef, BodyProps>(
       }
     }, [fbx]);
 
-    // Expose camera control functions
     useImperativeHandle(
       ref,
       () => ({
         zoomToPosition: (
           position: Vector3,
           target: Vector3,
-          // eslint-disable-next-line @typescript-eslint/no-unused-vars
           _distance: number = 2
         ) => {
           if (controlsRef.current) {
-            // Animate camera to new position
             const startPosition = camera.position.clone();
             const startTarget = controlsRef.current.target.clone();
 
-            // Create animation
             const animate = (progress: number) => {
               camera.position.lerpVectors(
                 startPosition,
                 position,
                 progress
               );
-              controlsRef.current.target.lerpVectors(
+              controlsRef.current!.target.lerpVectors(
                 startTarget,
                 target,
                 progress
               );
-              controlsRef.current.update();
+              controlsRef.current!.update();
             };
 
-            // Simple animation loop
             let startTime: number;
             const duration = 1000; // 1 second
 
@@ -510,14 +502,9 @@ const Body = forwardRef<BodyRef, BodyProps>(
               pin.position.z
             );
 
-            // Calculate camera position based on pin location for better viewing
-            // For pins on the front of the body, position camera in front
-            // For pins on the back, position camera behind
-            const distance = 5; // Distance from pin (increased for zoom out)
-            const height = 2; // Height above pin (increased for better overview)
+            const distance = 8; // Distance from pin (increased for zoom out)
+            const height = 3; // Height above pin (increased for better overview)
 
-            // Determine camera position based on pin's Z position
-            // Positive Z = front of body, Negative Z = back of body
             const cameraZ =
               pinPosition.z > 0
                 ? pinPosition.z + distance // Front of body - camera in front
@@ -529,7 +516,6 @@ const Body = forwardRef<BodyRef, BodyProps>(
               cameraZ // Position based on body orientation
             );
 
-            // Animate camera to pin position
             const startPosition = camera.position.clone();
             const startTarget = controlsRef.current.target.clone();
             const duration = 1000; // 1 second
@@ -575,10 +561,8 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
     return (
       <>
-        {/* FBX Model */}
         <primitive object={fbx} ref={groupRef} />
 
-        {/* Pins */}
         {pins.map((pin) => (
           <PinComponent
             key={pin.id}
@@ -590,12 +574,10 @@ const Body = forwardRef<BodyRef, BodyProps>(
           />
         ))}
 
-        {/* Lighting */}
         <ambientLight intensity={0.4} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
         <directionalLight position={[-10, -10, -5]} intensity={0.5} />
 
-        {/* Camera Controls */}
         <OrbitControls
           ref={controlsRef}
           enablePan={true}

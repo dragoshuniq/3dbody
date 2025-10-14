@@ -3,9 +3,7 @@ import { persist } from "zustand/middleware";
 import { type Pin, type Treatment } from "../types/Treatment";
 import dayjs from "dayjs";
 
-// 3 Dummy treatment data with visible positions for 0.5 scale model
 const dummyTreatments: Treatment[] = [
-  // Face treatment - positioned on the face area
   {
     id: "treatment-1",
     area: "Face",
@@ -17,7 +15,6 @@ const dummyTreatments: Treatment[] = [
     position: { x: 0, y: 65, z: 5 },
     notes: "Facial rejuvenation treatment",
   },
-  // Chest treatment - positioned on the chest area
   {
     id: "treatment-2",
     area: "Chest",
@@ -29,7 +26,6 @@ const dummyTreatments: Treatment[] = [
     position: { x: 0, y: 50, z: 4.1 },
     notes: "Chest contouring and enhancement",
   },
-  // Legs treatment - positioned on the legs area
   {
     id: "treatment-3",
     area: "Legs",
@@ -43,7 +39,6 @@ const dummyTreatments: Treatment[] = [
   },
 ];
 
-// Create initial pins from dummy treatments
 const initialPins: Pin[] = dummyTreatments.map((treatment) => ({
   id: treatment.id,
   position: treatment.position,
@@ -52,16 +47,13 @@ const initialPins: Pin[] = dummyTreatments.map((treatment) => ({
 }));
 
 interface BodyState {
-  // Pins state
   pins: Pin[];
   isAddingPin: boolean;
   selectedPinId: string | null;
 
-  // Camera state
   cameraPosition: { x: number; y: number; z: number };
   cameraTarget: { x: number; y: number; z: number };
 
-  // Actions
   addPin: (pin: Pin) => void;
   updatePin: (id: string, comment: string) => void;
   updateTreatment: (id: string, treatment: Treatment) => void;
@@ -92,7 +84,6 @@ export const useBodyStore = create<BodyState>()(
       cameraPosition: { x: 0, y: 25, z: 190 },
       cameraTarget: { x: 0, y: 25, z: 0 },
 
-      // Actions
       addPin: (pin) =>
         set((state) => ({
           pins: [...state.pins, pin],
@@ -135,7 +126,6 @@ export const useBodyStore = create<BodyState>()(
 
       clearAllPins: () => set({ pins: [] }),
 
-      // Initialize pins if empty
       initializePins: () => {
         const currentState = get();
         if (currentState.pins.length === 0) {
@@ -151,7 +141,6 @@ export const useBodyStore = create<BodyState>()(
         cameraTarget: state.cameraTarget,
       }),
       onRehydrateStorage: () => (state) => {
-        // Initialize pins if they're empty after rehydration
         if (state && state.pins.length === 0) {
           state.pins = initialPins;
         }
