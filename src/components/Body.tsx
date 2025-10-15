@@ -6,20 +6,26 @@ import React, {
   useImperativeHandle,
 } from "react";
 import { useThree } from "@react-three/fiber";
-import { OrbitControls, useFBX, Html } from "@react-three/drei";
+import { OrbitControls, useFBX, Html, Line } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Group, Vector3 } from "three";
 import * as THREE from "three";
-import { type Pin } from "../types/Treatment";
+import { type Pin, type Line as LineType } from "../types/Treatment";
 import { useBodyStore } from "../store/useBodyStore";
+import LineComponent from "./LineComponent";
 import dayjs from "dayjs";
 
 interface BodyProps {
   pins: Pin[];
+  lines: LineType[];
   onAddPin: (pin: Pin) => void;
   onUpdatePin: (id: string, comment: string) => void;
   onRemovePin: (id: string) => void;
+  onAddLine: (line: LineType) => void;
+  onUpdateLine: (id: string, text: string) => void;
+  onRemoveLine: (id: string) => void;
   isAddingPin: boolean;
+  isDrawingLine: boolean;
   onOpenTreatmentForm: (pinId: string) => void;
   treatmentFormOpen: boolean;
 }
@@ -306,10 +312,15 @@ const Body = forwardRef<BodyRef, BodyProps>(
   (
     {
       pins,
+      lines,
       onAddPin,
       onUpdatePin,
       onRemovePin,
+      onAddLine,
+      onUpdateLine,
+      onRemoveLine,
       isAddingPin,
+      isDrawingLine,
       onOpenTreatmentForm,
       treatmentFormOpen,
     },
@@ -319,8 +330,158 @@ const Body = forwardRef<BodyRef, BodyProps>(
     const controlsRef = useRef<OrbitControlsImpl>(null);
     const fbx = useFBX("/dude.fbx");
     const { camera, raycaster, pointer } = useThree();
-    const { updateCameraPosition, updateCameraTarget } =
-      useBodyStore();
+    const {
+      updateCameraPosition,
+      updateCameraTarget,
+      lineDrawingState,
+      setLineDrawingState,
+      orbitControlsEnabled,
+    } = useBodyStore();
+
+    const [currentLine, setCurrentLine] = useState<Vector3[]>([]);
+    const [isDrawing, setIsDrawing] = useState(false);
+
+    // Reset line drawing state when drawing mode is disabled
+    React.useEffect(() => {
+      if (!isDrawingLine) {
+        setCurrentLine([]);
+        setIsDrawing(false);
+        setLineDrawingState("idle");
+      }
+    }, [isDrawingLine, setLineDrawingState]);
+
+    // Helper function to get intersection point on body surface
+    const getSurfaceIntersection = useCallback(
+      (event: MouseEvent) => {
+        if (!fbx) return null;
+
+        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+
+        raycaster.setFromCamera(pointer, camera);
+
+        let intersects: THREE.Intersection[] = [];
+
+        intersects = raycaster.intersectObject(fbx, true);
+
+        if (intersects.length === 0) {
+          intersects = raycaster.intersectObjects(fbx.children, true);
+        }
+
+        if (intersects.length === 0) {
+          const allMeshes: THREE.Mesh[] = [];
+          fbx.traverse((child) => {
+            if (child instanceof THREE.Mesh) {
+              allMeshes.push(child);
+            }
+          });
+          intersects = raycaster.intersectObjects(allMeshes, true);
+        }
+
+        if (intersects.length > 0) {
+          const { point, face } = intersects[0];
+          // Move point a tiny bit along the face normal to avoid z-fighting
+          const offsetPoint = point
+            .clone()
+            .add(face.normal.clone().multiplyScalar(0.01));
+          return offsetPoint;
+        }
+
+        // If no intersection found, project onto a sphere around the body
+        const bodyBox = new THREE.Box3().setFromObject(fbx);
+        const bodyCenter = bodyBox.getCenter(new THREE.Vector3());
+        const bodySize = bodyBox.getSize(new THREE.Vector3());
+        const bodyRadius =
+          Math.max(bodySize.x, bodySize.y, bodySize.z) * 0.6;
+
+        const ray = raycaster.ray;
+        const sphere = new THREE.Sphere(bodyCenter, bodyRadius);
+
+        const intersectionPoint = new THREE.Vector3();
+        const result = ray.intersectSphere(sphere, intersectionPoint);
+
+        if (result) {
+          console.log("Projected onto sphere:", intersectionPoint);
+          return intersectionPoint;
+        }
+
+        // Fallback: project onto a plane at body center
+        const plane = new THREE.Plane(new THREE.Vector3(0, 0, 1), 0);
+        plane.translate(bodyCenter);
+
+        const planeIntersection = new THREE.Vector3();
+        ray.intersectPlane(plane, planeIntersection);
+
+        if (planeIntersection) {
+          console.log("Projected onto plane:", planeIntersection);
+          return planeIntersection;
+        }
+
+        return null;
+      },
+      [fbx, pointer, raycaster, camera]
+    );
+
+    const handlePointerDown = useCallback(
+      (event: MouseEvent) => {
+        if (!isDrawingLine || !fbx) return;
+        event.stopPropagation();
+        setIsDrawing(true);
+        setCurrentLine([]);
+      },
+      [isDrawingLine, fbx]
+    );
+
+    const handlePointerUp = useCallback(
+      (event: MouseEvent) => {
+        if (!isDrawingLine) return;
+        event.stopPropagation();
+
+        if (currentLine.length >= 2) {
+          const newLine: LineType = {
+            id: Date.now().toString(),
+            startPoint: {
+              x: currentLine[0].x,
+              y: currentLine[0].y,
+              z: currentLine[0].z,
+            },
+            endPoint: {
+              x: currentLine[currentLine.length - 1].x,
+              y: currentLine[currentLine.length - 1].y,
+              z: currentLine[currentLine.length - 1].z,
+            },
+            points: currentLine.map((point) => ({
+              x: point.x,
+              y: point.y,
+              z: point.z,
+            })),
+            text: "",
+            color: "#FF6B6B",
+          };
+          console.log("Adding new line:", newLine);
+          onAddLine(newLine);
+        }
+
+        setIsDrawing(false);
+        setCurrentLine([]);
+      },
+      [isDrawingLine, currentLine, onAddLine]
+    );
+
+    const handlePointerMove = useCallback(
+      (event: MouseEvent) => {
+        if (!isDrawingLine || !isDrawing || !fbx) return;
+
+        const intersectionPoint = getSurfaceIntersection(event);
+        if (intersectionPoint && fbx) {
+          const localPoint = fbx.worldToLocal(
+            intersectionPoint.clone()
+          );
+          setCurrentLine((prev) => [...prev, localPoint]);
+        }
+      },
+      [isDrawingLine, isDrawing, fbx, getSurfaceIntersection]
+    );
 
     const handleClick = useCallback(
       (event: MouseEvent) => {
@@ -397,9 +558,22 @@ const Body = forwardRef<BodyRef, BodyProps>(
       const canvas = document.querySelector("canvas");
       if (canvas) {
         canvas.addEventListener("click", handleClick);
-        return () => canvas.removeEventListener("click", handleClick);
+        canvas.addEventListener("mousedown", handlePointerDown);
+        canvas.addEventListener("mouseup", handlePointerUp);
+        canvas.addEventListener("mousemove", handlePointerMove);
+        return () => {
+          canvas.removeEventListener("click", handleClick);
+          canvas.removeEventListener("mousedown", handlePointerDown);
+          canvas.removeEventListener("mouseup", handlePointerUp);
+          canvas.removeEventListener("mousemove", handlePointerMove);
+        };
       }
-    }, [handleClick]);
+    }, [
+      handleClick,
+      handlePointerDown,
+      handlePointerUp,
+      handlePointerMove,
+    ]);
 
     React.useEffect(() => {
       if (fbx) {
@@ -574,15 +748,66 @@ const Body = forwardRef<BodyRef, BodyProps>(
           />
         ))}
 
+        {lines.map((line) => {
+          console.log("Rendering line:", line);
+          // Handle both old lines (without points) and new lines (with points)
+          const points = line.points
+            ? line.points.map((point) => {
+                const localPoint = new Vector3(
+                  point.x,
+                  point.y,
+                  point.z
+                );
+                return fbx.localToWorld(localPoint.clone());
+              })
+            : [
+                new Vector3(
+                  line.startPoint.x,
+                  line.startPoint.y,
+                  line.startPoint.z
+                ),
+                new Vector3(
+                  line.endPoint.x,
+                  line.endPoint.y,
+                  line.endPoint.z
+                ),
+              ];
+          return (
+            <Line
+              key={line.id}
+              points={points}
+              color={line.color}
+              lineWidth={3}
+              transparent
+              opacity={0.8}
+              depthTest={false}
+            />
+          );
+        })}
+
+        {/* Current drawing line preview */}
+        {currentLine.length > 0 && (
+          <Line
+            points={currentLine.map((p) =>
+              fbx.localToWorld(p.clone())
+            )}
+            color="#00FF00"
+            lineWidth={2}
+            transparent
+            opacity={0.6}
+            depthTest={false}
+          />
+        )}
+
         <ambientLight intensity={0.4} />
         <directionalLight position={[10, 10, 5]} intensity={1} />
         <directionalLight position={[-10, -10, -5]} intensity={0.5} />
 
         <OrbitControls
           ref={controlsRef}
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
+          enablePan={orbitControlsEnabled}
+          enableZoom={orbitControlsEnabled}
+          enableRotate={orbitControlsEnabled}
           minDistance={0.5}
           maxDistance={200}
           maxPolarAngle={Math.PI / 2}

@@ -7,7 +7,11 @@ import CameraControls, {
   type CameraControlsRef,
 } from "./components/CameraControls";
 import { useBodyStore } from "./store/useBodyStore";
-import { type Pin, type Treatment } from "./types/Treatment";
+import {
+  type Pin,
+  type Treatment,
+  type Line as LineType,
+} from "./types/Treatment";
 import PinList from "./components/PinList";
 import TreatmentForm from "./components/TreatmentForm";
 import PrintButton from "./components/PrintButton";
@@ -19,13 +23,22 @@ import "./App.css";
 function App() {
   const {
     pins,
+    lines,
     isAddingPin,
+    isDrawingLine,
+    orbitControlsEnabled,
     setIsAddingPin,
+    setIsDrawingLine,
+    setOrbitControlsEnabled,
     addPin,
     updatePin,
     updateTreatment,
     removePin,
+    addLine,
+    updateLine,
+    removeLine,
     clearAllPins,
+    clearAllLines,
     initializePins,
   } = useBodyStore();
 
@@ -63,6 +76,28 @@ function App() {
     [removePin]
   );
 
+  const handleAddLine = useCallback(
+    (line: LineType) => {
+      console.log("App handleAddLine called with:", line);
+      addLine(line);
+    },
+    [addLine]
+  );
+
+  const handleUpdateLine = useCallback(
+    (id: string, text: string) => {
+      updateLine(id, text);
+    },
+    [updateLine]
+  );
+
+  const handleRemoveLine = useCallback(
+    (id: string) => {
+      removeLine(id);
+    },
+    [removeLine]
+  );
+
   const handleSavePins = useCallback(() => {
     alert("Pins saved successfully!");
   }, []);
@@ -76,6 +111,20 @@ function App() {
       clearAllPins();
     }
   }, [clearAllPins]);
+
+  const handleClearLines = useCallback(() => {
+    if (confirm("Are you sure you want to clear all lines?")) {
+      clearAllLines();
+    }
+  }, [clearAllLines]);
+
+  const handleTogglePinMode = useCallback(() => {
+    setIsAddingPin(!isAddingPin);
+  }, [isAddingPin, setIsAddingPin]);
+
+  const handleToggleLineMode = useCallback(() => {
+    setIsDrawingLine(!isDrawingLine);
+  }, [isDrawingLine, setIsDrawingLine]);
 
   const handleCameraChange = useCallback(
     (position: Vector3, target: Vector3) => {
@@ -111,7 +160,8 @@ function App() {
 
     const handlePointerMissed = useCallback(
       (event: MouseEvent) => {
-        if (!isAddingPin) return;
+        // Only handle missed clicks when in pin mode and orbit controls are disabled
+        if (!isAddingPin || orbitControlsEnabled) return;
 
         const x = (event.clientX / window.innerWidth) * 2 - 1;
         const y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -137,7 +187,7 @@ function App() {
         };
         addPin(newPin);
       },
-      [camera]
+      [camera, isAddingPin, orbitControlsEnabled, addPin]
     );
 
     useEffect(() => {
@@ -191,7 +241,7 @@ function App() {
 
           <div style={{ marginBottom: "15px" }}>
             <button
-              onClick={() => setIsAddingPin(!isAddingPin)}
+              onClick={handleTogglePinMode}
               style={{
                 background: isAddingPin ? "#f44336" : "#4CAF50",
                 color: "white",
@@ -201,6 +251,7 @@ function App() {
                 cursor: "pointer",
                 fontSize: "14px",
                 width: "100%",
+                marginBottom: "8px",
               }}
             >
               {isAddingPin ? "Cancel Adding Pin" : "Add Pin Mode"}
@@ -214,6 +265,50 @@ function App() {
                 }}
               >
                 Click on the body to add a pin
+                <br />
+                <span
+                  style={{ color: "#ff6b6b", fontWeight: "bold" }}
+                >
+                  Orbit controls disabled
+                </span>
+              </p>
+            )}
+          </div>
+
+          <div style={{ marginBottom: "15px" }}>
+            <button
+              onClick={handleToggleLineMode}
+              style={{
+                background: isDrawingLine ? "#f44336" : "#FF6B6B",
+                color: "white",
+                border: "none",
+                padding: "10px 15px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "14px",
+                width: "100%",
+                marginBottom: "8px",
+              }}
+            >
+              {isDrawingLine
+                ? "Cancel Drawing Line"
+                : "Draw Line Mode"}
+            </button>
+            {isDrawingLine && (
+              <p
+                style={{
+                  fontSize: "12px",
+                  margin: "5px 0 0 0",
+                  color: "#ccc",
+                }}
+              >
+                Click two points on the body to draw a line
+                <br />
+                <span
+                  style={{ color: "#ff6b6b", fontWeight: "bold" }}
+                >
+                  Orbit controls disabled
+                </span>
               </p>
             )}
           </div>
@@ -233,6 +328,23 @@ function App() {
               <li>Right click + drag: Pan</li>
               <li>Scroll: Zoom in/out</li>
             </ul>
+            <div
+              style={{
+                fontSize: "11px",
+                margin: "8px 0 0 0",
+                padding: "4px 8px",
+                borderRadius: "4px",
+                backgroundColor: orbitControlsEnabled
+                  ? "#4CAF50"
+                  : "#f44336",
+                color: "white",
+                fontWeight: "bold",
+              }}
+            >
+              {orbitControlsEnabled
+                ? "✓ Orbit Controls Active"
+                : "✗ Orbit Controls Disabled"}
+            </div>
             <p
               style={{
                 fontSize: "11px",
@@ -284,22 +396,44 @@ function App() {
             </button>
           </div>
 
-          <button
-            onClick={handleClearPins}
+          <div
             style={{
-              background: "#f44336",
-              color: "white",
-              border: "none",
-              padding: "8px 12px",
-              borderRadius: "4px",
-              cursor: "pointer",
-              fontSize: "12px",
-              width: "100%",
-              marginBottom: "10px",
+              display: "flex",
+              gap: "10px",
+              marginBottom: "15px",
             }}
           >
-            Clear All Pins
-          </button>
+            <button
+              onClick={handleClearPins}
+              style={{
+                background: "#f44336",
+                color: "white",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "12px",
+                flex: 1,
+              }}
+            >
+              Clear Pins
+            </button>
+            <button
+              onClick={handleClearLines}
+              style={{
+                background: "#FF6B6B",
+                color: "white",
+                border: "none",
+                padding: "8px 12px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "12px",
+                flex: 1,
+              }}
+            >
+              Clear Lines
+            </button>
+          </div>
 
           <button
             onClick={initializePins}
@@ -335,7 +469,7 @@ function App() {
               color: "#ccc",
             }}
           >
-            Pins: {pins.length}
+            Pins: {pins.length} | Lines: {lines.length}
           </div>
         </div>
 
@@ -352,10 +486,15 @@ function App() {
           <Body
             ref={bodyRef}
             pins={pins}
+            lines={lines}
             onAddPin={handleAddPin}
             onUpdatePin={handleUpdatePin}
             onRemovePin={handleRemovePin}
+            onAddLine={handleAddLine}
+            onUpdateLine={handleUpdateLine}
+            onRemoveLine={handleRemoveLine}
             isAddingPin={isAddingPin}
+            isDrawingLine={isDrawingLine}
             onOpenTreatmentForm={handleOpenTreatmentForm}
             treatmentFormOpen={treatmentFormOpen}
           />

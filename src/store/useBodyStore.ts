@@ -1,6 +1,10 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { type Pin, type Treatment } from "../types/Treatment";
+import {
+  type Pin,
+  type Treatment,
+  type Line,
+} from "../types/Treatment";
 import dayjs from "dayjs";
 
 const dummyTreatments: Treatment[] = [
@@ -48,8 +52,13 @@ const initialPins: Pin[] = dummyTreatments.map((treatment) => ({
 
 interface BodyState {
   pins: Pin[];
+  lines: Line[];
   isAddingPin: boolean;
+  isDrawingLine: boolean;
   selectedPinId: string | null;
+  selectedLineId: string | null;
+  lineDrawingState: "idle" | "startPoint" | "endPoint";
+  orbitControlsEnabled: boolean;
 
   cameraPosition: { x: number; y: number; z: number };
   cameraTarget: { x: number; y: number; z: number };
@@ -60,6 +69,18 @@ interface BodyState {
   removePin: (id: string) => void;
   setIsAddingPin: (isAdding: boolean) => void;
   setSelectedPin: (id: string | null) => void;
+
+  addLine: (line: Line) => void;
+  updateLine: (id: string, text: string) => void;
+  removeLine: (id: string) => void;
+  setIsDrawingLine: (isDrawing: boolean) => void;
+  setSelectedLine: (id: string | null) => void;
+  setLineDrawingState: (
+    state: "idle" | "startPoint" | "endPoint"
+  ) => void;
+  setOrbitControlsEnabled: (enabled: boolean) => void;
+  clearAllLines: () => void;
+
   updateCameraPosition: (position: {
     x: number;
     y: number;
@@ -79,8 +100,13 @@ export const useBodyStore = create<BodyState>()(
   persist(
     (set, get) => ({
       pins: initialPins,
+      lines: [],
       isAddingPin: false,
+      isDrawingLine: false,
       selectedPinId: null,
+      selectedLineId: null,
+      lineDrawingState: "idle",
+      orbitControlsEnabled: true,
       cameraPosition: { x: 0, y: 25, z: 190 },
       cameraTarget: { x: 0, y: 25, z: 0 },
 
@@ -88,6 +114,7 @@ export const useBodyStore = create<BodyState>()(
         set((state) => ({
           pins: [...state.pins, pin],
           isAddingPin: false,
+          orbitControlsEnabled: true,
         })),
 
       updatePin: (id, comment) =>
@@ -109,9 +136,55 @@ export const useBodyStore = create<BodyState>()(
           pins: state.pins.filter((pin) => pin.id !== id),
         })),
 
-      setIsAddingPin: (isAdding) => set({ isAddingPin: isAdding }),
+      setIsAddingPin: (isAdding) =>
+        set({
+          isAddingPin: isAdding,
+          orbitControlsEnabled: !isAdding,
+        }),
 
       setSelectedPin: (id) => set({ selectedPinId: id }),
+
+      addLine: (line) => {
+        console.log("Store addLine called with:", line);
+        set((state) => {
+          const newLines = [...state.lines, line];
+          console.log("New lines array:", newLines);
+          return {
+            lines: newLines,
+            isDrawingLine: false,
+            lineDrawingState: "idle",
+            orbitControlsEnabled: true,
+          };
+        });
+      },
+
+      updateLine: (id, text) =>
+        set((state) => ({
+          lines: state.lines.map((line) =>
+            line.id === id ? { ...line, text } : line
+          ),
+        })),
+
+      removeLine: (id) =>
+        set((state) => ({
+          lines: state.lines.filter((line) => line.id !== id),
+        })),
+
+      setIsDrawingLine: (isDrawing) =>
+        set({
+          isDrawingLine: isDrawing,
+          orbitControlsEnabled: !isDrawing,
+        }),
+
+      setSelectedLine: (id) => set({ selectedLineId: id }),
+
+      setLineDrawingState: (state) =>
+        set({ lineDrawingState: state }),
+
+      setOrbitControlsEnabled: (enabled) =>
+        set({ orbitControlsEnabled: enabled }),
+
+      clearAllLines: () => set({ lines: [] }),
 
       updateCameraPosition: (position) =>
         set({ cameraPosition: position }),
@@ -137,6 +210,7 @@ export const useBodyStore = create<BodyState>()(
       name: "body3d-storage",
       partialize: (state) => ({
         pins: state.pins,
+        lines: state.lines,
         cameraPosition: state.cameraPosition,
         cameraTarget: state.cameraTarget,
       }),

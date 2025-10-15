@@ -24,3 +24,24 @@ export interface Pin {
   treatment?: Treatment;
   comment: string;
 }
+
+export interface Line {
+  id: string;
+  startPoint: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  endPoint: {
+    x: number;
+    y: number;
+    z: number;
+  };
+  points: {
+    x: number;
+    y: number;
+    z: number;
+  }[];
+  text: string;
+  color: string;
+}
