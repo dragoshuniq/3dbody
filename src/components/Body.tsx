@@ -6,13 +6,17 @@ import React, {
   useImperativeHandle,
 } from "react";
 import { useThree } from "@react-three/fiber";
-import { OrbitControls, useFBX, Html, Line } from "@react-three/drei";
+import {
+  OrbitControls,
+  useGLTF,
+  Html,
+  Line,
+} from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Group, Vector3 } from "three";
 import * as THREE from "three";
 import { type Pin, type Line as LineType } from "../types/Treatment";
 import { useBodyStore } from "../store/useBodyStore";
-import LineComponent from "./LineComponent";
 import dayjs from "dayjs";
 
 interface BodyProps {
@@ -317,8 +321,6 @@ const Body = forwardRef<BodyRef, BodyProps>(
       onUpdatePin,
       onRemovePin,
       onAddLine,
-      onUpdateLine,
-      onRemoveLine,
       isAddingPin,
       isDrawingLine,
       onOpenTreatmentForm,
@@ -328,12 +330,12 @@ const Body = forwardRef<BodyRef, BodyProps>(
   ) => {
     const groupRef = useRef<Group>(null);
     const controlsRef = useRef<OrbitControlsImpl>(null);
-    const fbx = useFBX("/dude.fbx");
+    const gltf = useGLTF("/buhai.glb");
+    const dude = gltf.scene;
     const { camera, raycaster, pointer } = useThree();
     const {
       updateCameraPosition,
       updateCameraTarget,
-      lineDrawingState,
       setLineDrawingState,
       orbitControlsEnabled,
     } = useBodyStore();
@@ -353,7 +355,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
     // Helper function to get intersection point on body surface
     const getSurfaceIntersection = useCallback(
       (event: MouseEvent) => {
-        if (!fbx) return null;
+        if (!dude) return null;
 
         pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
         pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
@@ -362,15 +364,18 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
         let intersects: THREE.Intersection[] = [];
 
-        intersects = raycaster.intersectObject(fbx, true);
+        intersects = raycaster.intersectObject(dude, true);
 
         if (intersects.length === 0) {
-          intersects = raycaster.intersectObjects(fbx.children, true);
+          intersects = raycaster.intersectObjects(
+            dude.children,
+            true
+          );
         }
 
         if (intersects.length === 0) {
           const allMeshes: THREE.Mesh[] = [];
-          fbx.traverse((child) => {
+          dude.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               allMeshes.push(child);
             }
@@ -383,12 +388,15 @@ const Body = forwardRef<BodyRef, BodyProps>(
           // Move point a tiny bit along the face normal to avoid z-fighting
           const offsetPoint = point
             .clone()
-            .add(face.normal.clone().multiplyScalar(0.01));
+            .add(
+              face?.normal?.clone().multiplyScalar(0.01) ||
+                new THREE.Vector3()
+            );
           return offsetPoint;
         }
 
         // If no intersection found, project onto a sphere around the body
-        const bodyBox = new THREE.Box3().setFromObject(fbx);
+        const bodyBox = new THREE.Box3().setFromObject(dude);
         const bodyCenter = bodyBox.getCenter(new THREE.Vector3());
         const bodySize = bodyBox.getSize(new THREE.Vector3());
         const bodyRadius =
@@ -419,17 +427,17 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
         return null;
       },
-      [fbx, pointer, raycaster, camera]
+      [dude, pointer, raycaster, camera]
     );
 
     const handlePointerDown = useCallback(
       (event: MouseEvent) => {
-        if (!isDrawingLine || !fbx) return;
+        if (!isDrawingLine || !dude) return;
         event.stopPropagation();
         setIsDrawing(true);
         setCurrentLine([]);
       },
-      [isDrawingLine, fbx]
+      [isDrawingLine, dude]
     );
 
     const handlePointerUp = useCallback(
@@ -470,22 +478,22 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
     const handlePointerMove = useCallback(
       (event: MouseEvent) => {
-        if (!isDrawingLine || !isDrawing || !fbx) return;
+        if (!isDrawingLine || !isDrawing || !dude) return;
 
         const intersectionPoint = getSurfaceIntersection(event);
-        if (intersectionPoint && fbx) {
-          const localPoint = fbx.worldToLocal(
+        if (intersectionPoint && dude) {
+          const localPoint = dude.worldToLocal(
             intersectionPoint.clone()
           );
           setCurrentLine((prev) => [...prev, localPoint]);
         }
       },
-      [isDrawingLine, isDrawing, fbx, getSurfaceIntersection]
+      [isDrawingLine, isDrawing, dude, getSurfaceIntersection]
     );
 
     const handleClick = useCallback(
       (event: MouseEvent) => {
-        if (!isAddingPin || !fbx) return;
+        if (!isAddingPin || !dude) return;
 
         event.stopPropagation();
 
@@ -496,17 +504,20 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
         let intersects: THREE.Intersection[] = [];
 
-        intersects = raycaster.intersectObject(fbx, true);
+        intersects = raycaster.intersectObject(dude, true);
         console.log("Main FBX intersects:", intersects.length);
 
         if (intersects.length === 0) {
-          intersects = raycaster.intersectObjects(fbx.children, true);
+          intersects = raycaster.intersectObjects(
+            dude.children,
+            true
+          );
           console.log("Children intersects:", intersects.length);
         }
 
         if (intersects.length === 0) {
           const allMeshes: THREE.Mesh[] = [];
-          fbx.traverse((child) => {
+          dude.traverse((child) => {
             if (child instanceof THREE.Mesh) {
               allMeshes.push(child);
               console.log("Mesh details:", {
@@ -543,15 +554,15 @@ const Body = forwardRef<BodyRef, BodyProps>(
           onAddPin(newPin);
         } else {
           console.log("No intersection found - raycasting failed");
-          console.log("FBX position:", fbx.position);
-          console.log("FBX scale:", fbx.scale);
+          console.log("FBX position:", dude.position);
+          console.log("FBX scale:", dude.scale);
           console.log(
             "FBX bounding box:",
-            new THREE.Box3().setFromObject(fbx)
+            new THREE.Box3().setFromObject(dude)
           );
         }
       },
-      [isAddingPin, pointer, raycaster, camera, fbx, onAddPin]
+      [isAddingPin, pointer, raycaster, camera, dude, onAddPin]
     );
 
     React.useEffect(() => {
@@ -576,18 +587,18 @@ const Body = forwardRef<BodyRef, BodyProps>(
     ]);
 
     React.useEffect(() => {
-      if (fbx) {
-        console.log("FBX loaded, current scale:", fbx.scale);
+      if (dude) {
+        console.log("GLB loaded, current scale:", dude.scale);
 
-        fbx.scale.setScalar(0.5);
-        console.log("FBX scale set to:", fbx.scale);
+        dude.scale.setScalar(0.5);
+        console.log("GLB scale set to:", dude.scale);
 
-        const box = new THREE.Box3().setFromObject(fbx);
+        const box = new THREE.Box3().setFromObject(dude);
         const center = box.getCenter(new THREE.Vector3());
-        fbx.position.sub(center);
-        console.log("FBX centered at:", fbx.position);
+        dude.position.sub(center);
+        console.log("GLB centered at:", dude.position);
 
-        fbx.traverse((child) => {
+        dude.traverse((child) => {
           if (child instanceof THREE.Mesh) {
             child.visible = true;
             child.castShadow = true;
@@ -614,14 +625,14 @@ const Body = forwardRef<BodyRef, BodyProps>(
           }
         });
 
-        fbx.updateMatrix();
-        fbx.updateMatrixWorld(true);
+        dude.updateMatrix();
+        dude.updateMatrixWorld(true);
 
-        console.log("FBX model loaded and prepared for raycasting");
-        console.log("Final FBX scale:", fbx.scale);
-        console.log("Final FBX position:", fbx.position);
+        console.log("GLB model loaded and prepared for raycasting");
+        console.log("Final GLB scale:", dude.scale);
+        console.log("Final GLB position:", dude.position);
       }
-    }, [fbx]);
+    }, [dude]);
 
     useImperativeHandle(
       ref,
@@ -735,7 +746,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
     return (
       <>
-        <primitive object={fbx} ref={groupRef} />
+        <primitive object={dude} ref={groupRef} />
 
         {pins.map((pin) => (
           <PinComponent
@@ -758,7 +769,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
                   point.y,
                   point.z
                 );
-                return fbx.localToWorld(localPoint.clone());
+                return dude.localToWorld(localPoint.clone());
               })
             : [
                 new Vector3(
@@ -789,7 +800,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
         {currentLine.length > 0 && (
           <Line
             points={currentLine.map((p) =>
-              fbx.localToWorld(p.clone())
+              dude.localToWorld(p.clone())
             )}
             color="#00FF00"
             lineWidth={2}
