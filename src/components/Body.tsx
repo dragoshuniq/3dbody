@@ -6,18 +6,67 @@ import React, {
   useImperativeHandle,
 } from "react";
 import { useThree } from "@react-three/fiber";
-import {
-  OrbitControls,
-  useGLTF,
-  Html,
-  Line,
-} from "@react-three/drei";
+import { OrbitControls, useGLTF, Html } from "@react-three/drei";
 import { OrbitControls as OrbitControlsImpl } from "three-stdlib";
 import { Group, Vector3 } from "three";
 import * as THREE from "three";
 import { type Pin, type Line as LineType } from "../types/Treatment";
 import { useBodyStore } from "../store/useBodyStore";
 import dayjs from "dayjs";
+
+// Custom shader material for back-face culling lines
+const createBackFaceCullingLineMaterial = (color: string) => {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      color: { value: new THREE.Color(color) },
+    },
+    vertexShader: `
+      void main() {
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 color;
+      void main() {
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `,
+    side: THREE.FrontSide, // Only render front faces
+    transparent: true,
+    opacity: 0.8,
+  });
+};
+
+// Custom line component with back-face culling
+const BackFaceCullingLine: React.FC<{
+  points: Vector3[];
+  color: string;
+  lineWidth?: number;
+}> = ({ points, color, lineWidth = 3 }) => {
+  const lineRef = useRef<THREE.Mesh>(null);
+
+  React.useEffect(() => {
+    if (lineRef.current && points.length >= 2) {
+      // Create a tube geometry along the line path
+      const curve = new THREE.CatmullRomCurve3(points);
+      const geometry = new THREE.TubeGeometry(
+        curve,
+        points.length * 2,
+        lineWidth / 100,
+        8,
+        false
+      );
+
+      // Create material with back-face culling
+      const material = createBackFaceCullingLineMaterial(color);
+
+      lineRef.current.geometry = geometry;
+      lineRef.current.material = material;
+    }
+  }, [points, color, lineWidth]);
+
+  return <mesh ref={lineRef} />;
+};
 
 interface BodyProps {
   pins: Pin[];
@@ -481,14 +530,15 @@ const Body = forwardRef<BodyRef, BodyProps>(
         if (!isDrawingLine || !isDrawing || !dude) return;
 
         const intersectionPoint = getSurfaceIntersection(event);
-        if (intersectionPoint && dude) {
-          const localPoint = dude.worldToLocal(
-            intersectionPoint.clone()
-          );
-          setCurrentLine((prev) => [...prev, localPoint]);
+        if (intersectionPoint) {
+          // Store in world coordinates to avoid precision issues
+          setCurrentLine((prev) => [
+            ...prev,
+            intersectionPoint.clone(),
+          ]);
         }
       },
-      [isDrawingLine, isDrawing, dude, getSurfaceIntersection]
+      [isDrawingLine, isDrawing, getSurfaceIntersection, dude]
     );
 
     const handleClick = useCallback(
@@ -764,12 +814,8 @@ const Body = forwardRef<BodyRef, BodyProps>(
           // Handle both old lines (without points) and new lines (with points)
           const points = line.points
             ? line.points.map((point) => {
-                const localPoint = new Vector3(
-                  point.x,
-                  point.y,
-                  point.z
-                );
-                return dude.localToWorld(localPoint.clone());
+                // Points are now stored in world coordinates, use them directly
+                return new Vector3(point.x, point.y, point.z);
               })
             : [
                 new Vector3(
@@ -784,29 +830,21 @@ const Body = forwardRef<BodyRef, BodyProps>(
                 ),
               ];
           return (
-            <Line
+            <BackFaceCullingLine
               key={line.id}
               points={points}
               color={line.color}
               lineWidth={3}
-              transparent
-              opacity={0.8}
-              depthTest={false}
             />
           );
         })}
 
         {/* Current drawing line preview */}
         {currentLine.length > 0 && (
-          <Line
-            points={currentLine.map((p) =>
-              dude.localToWorld(p.clone())
-            )}
+          <BackFaceCullingLine
+            points={currentLine}
             color="#00FF00"
             lineWidth={2}
-            transparent
-            opacity={0.6}
-            depthTest={false}
           />
         )}
 
@@ -821,7 +859,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
           enableRotate={orbitControlsEnabled}
           minDistance={0.5}
           maxDistance={200}
-          maxPolarAngle={Math.PI / 2}
+          maxPolarAngle={Math.PI}
           onChange={() => {
             if (controlsRef.current) {
               const position = camera.position;
