@@ -13,7 +13,7 @@ import * as THREE from "three";
 import { type Pin, type Line as LineType } from "../types/Treatment";
 import { useBodyStore } from "../store/useBodyStore";
 import dayjs from "dayjs";
-import { BackFaceCullingLine } from "./LineComponent";
+import { BackFaceCullingLine, StraightLine } from "./LineComponent";
 
 interface BodyProps {
   pins: Pin[];
@@ -26,6 +26,7 @@ interface BodyProps {
   onRemoveLine: (id: string) => void;
   isAddingPin: boolean;
   isDrawingLine: boolean;
+  isDrawingStraightLine: boolean;
   onOpenTreatmentForm: (pinId: string) => void;
   treatmentFormOpen: boolean;
 }
@@ -319,6 +320,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
       onAddLine,
       isAddingPin,
       isDrawingLine,
+      isDrawingStraightLine,
       onOpenTreatmentForm,
       treatmentFormOpen,
     },
@@ -333,11 +335,20 @@ const Body = forwardRef<BodyRef, BodyProps>(
       updateCameraPosition,
       updateCameraTarget,
       setLineDrawingState,
+      setStraightLineDrawingState,
+      setIsDrawingStraightLine,
+      straightLineDrawingState,
       orbitControlsEnabled,
     } = useBodyStore();
 
     const [currentLine, setCurrentLine] = useState<Vector3[]>([]);
     const [isDrawing, setIsDrawing] = useState(false);
+    const [straightLineStartPoint, setStraightLineStartPoint] =
+      useState<Vector3 | null>(null);
+    const [straightLineEndPoint, setStraightLineEndPoint] =
+      useState<Vector3 | null>(null);
+    const [previewEndPoint, setPreviewEndPoint] =
+      useState<Vector3 | null>(null);
 
     // Reset line drawing state when drawing mode is disabled
     React.useEffect(() => {
@@ -347,6 +358,16 @@ const Body = forwardRef<BodyRef, BodyProps>(
         setLineDrawingState("idle");
       }
     }, [isDrawingLine, setLineDrawingState]);
+
+    // Reset straight line drawing state when drawing mode is disabled
+    React.useEffect(() => {
+      if (!isDrawingStraightLine) {
+        setStraightLineStartPoint(null);
+        setStraightLineEndPoint(null);
+        setPreviewEndPoint(null);
+        setStraightLineDrawingState("idle");
+      }
+    }, [isDrawingStraightLine, setStraightLineDrawingState]);
 
     // Helper function to get intersection point on body surface
     const getSurfaceIntersection = useCallback(
@@ -488,6 +509,28 @@ const Body = forwardRef<BodyRef, BodyProps>(
       [isDrawingLine, isDrawing, getSurfaceIntersection, dude]
     );
 
+    const handleStraightLineMouseMove = useCallback(
+      (event: MouseEvent) => {
+        if (
+          !isDrawingStraightLine ||
+          straightLineDrawingState !== "startPoint" ||
+          !dude
+        )
+          return;
+
+        const intersectionPoint = getSurfaceIntersection(event);
+        if (intersectionPoint) {
+          setPreviewEndPoint(intersectionPoint.clone());
+        }
+      },
+      [
+        isDrawingStraightLine,
+        straightLineDrawingState,
+        getSurfaceIntersection,
+        dude,
+      ]
+    );
+
     const handleClick = useCallback(
       (event: MouseEvent) => {
         if (!isAddingPin || !dude) return;
@@ -562,25 +605,111 @@ const Body = forwardRef<BodyRef, BodyProps>(
       [isAddingPin, pointer, raycaster, camera, dude, onAddPin]
     );
 
+    const handleStraightLineClick = useCallback(
+      (event: MouseEvent) => {
+        if (!isDrawingStraightLine || !dude) return;
+
+        event.stopPropagation();
+
+        const intersectionPoint = getSurfaceIntersection(event);
+        if (!intersectionPoint) return;
+
+        if (straightLineDrawingState === "idle") {
+          // First click - set start point
+          setStraightLineStartPoint(intersectionPoint.clone());
+          setStraightLineDrawingState("startPoint");
+        } else if (straightLineDrawingState === "startPoint") {
+          // Second click - set end point and create line
+          setStraightLineEndPoint(intersectionPoint.clone());
+
+          if (straightLineStartPoint) {
+            const newLine: LineType = {
+              id: Date.now().toString(),
+              startPoint: {
+                x: straightLineStartPoint.x,
+                y: straightLineStartPoint.y,
+                z: straightLineStartPoint.z,
+              },
+              endPoint: {
+                x: intersectionPoint.x,
+                y: intersectionPoint.y,
+                z: intersectionPoint.z,
+              },
+              points: [
+                {
+                  x: straightLineStartPoint.x,
+                  y: straightLineStartPoint.y,
+                  z: straightLineStartPoint.z,
+                },
+                {
+                  x: intersectionPoint.x,
+                  y: intersectionPoint.y,
+                  z: intersectionPoint.z,
+                },
+              ],
+              text: "",
+              color: "#FF0000", // Red color for straight lines
+              isStraightLine: true,
+            };
+            console.log("Adding new straight line:", newLine);
+            onAddLine(newLine);
+          }
+
+          // Reset state and exit drawing mode
+          setStraightLineStartPoint(null);
+          setStraightLineEndPoint(null);
+          setPreviewEndPoint(null);
+          setStraightLineDrawingState("idle");
+          // Exit straight line drawing mode after completing the line
+          setIsDrawingStraightLine(false);
+        }
+      },
+      [
+        isDrawingStraightLine,
+        straightLineDrawingState,
+        straightLineStartPoint,
+        getSurfaceIntersection,
+        onAddLine,
+        setStraightLineDrawingState,
+        setIsDrawingStraightLine,
+        dude,
+      ]
+    );
+
     React.useEffect(() => {
       const canvas = document.querySelector("canvas");
       if (canvas) {
         canvas.addEventListener("click", handleClick);
+        canvas.addEventListener("click", handleStraightLineClick);
         canvas.addEventListener("mousedown", handlePointerDown);
         canvas.addEventListener("mouseup", handlePointerUp);
         canvas.addEventListener("mousemove", handlePointerMove);
+        canvas.addEventListener(
+          "mousemove",
+          handleStraightLineMouseMove
+        );
         return () => {
           canvas.removeEventListener("click", handleClick);
+          canvas.removeEventListener(
+            "click",
+            handleStraightLineClick
+          );
           canvas.removeEventListener("mousedown", handlePointerDown);
           canvas.removeEventListener("mouseup", handlePointerUp);
           canvas.removeEventListener("mousemove", handlePointerMove);
+          canvas.removeEventListener(
+            "mousemove",
+            handleStraightLineMouseMove
+          );
         };
       }
     }, [
       handleClick,
+      handleStraightLineClick,
       handlePointerDown,
       handlePointerUp,
       handlePointerMove,
+      handleStraightLineMouseMove,
     ]);
 
     React.useEffect(() => {
@@ -754,6 +883,33 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
         {lines.map((line) => {
           console.log("Rendering line:", line);
+
+          // Render straight lines with StraightLine component
+          if (line.isStraightLine) {
+            return (
+              <StraightLine
+                key={line.id}
+                startPoint={
+                  new Vector3(
+                    line.startPoint.x,
+                    line.startPoint.y,
+                    line.startPoint.z
+                  )
+                }
+                endPoint={
+                  new Vector3(
+                    line.endPoint.x,
+                    line.endPoint.y,
+                    line.endPoint.z
+                  )
+                }
+                color={line.color}
+                lineWidth={3}
+                bodyMesh={dude} // Pass the body mesh for surface following
+              />
+            );
+          }
+
           // Handle both old lines (without points) and new lines (with points)
           const points = line.points
             ? line.points.map((point) => {
@@ -788,6 +944,40 @@ const Body = forwardRef<BodyRef, BodyProps>(
             points={currentLine}
             color="#00FF00"
             lineWidth={2}
+          />
+        )}
+
+        {/* Green dot at first click point */}
+        {straightLineStartPoint && (
+          <mesh position={straightLineStartPoint}>
+            <sphereGeometry args={[0.15, 16, 16]} />
+            <meshStandardMaterial
+              color="#00FF00"
+              emissive="#00FF00"
+              emissiveIntensity={0.3}
+            />
+          </mesh>
+        )}
+
+        {/* Green preview line from start point to mouse cursor */}
+        {straightLineStartPoint && previewEndPoint && (
+          <StraightLine
+            startPoint={straightLineStartPoint}
+            endPoint={previewEndPoint}
+            color="#00FF00"
+            lineWidth={2}
+            bodyMesh={dude} // Pass the body mesh for surface following
+          />
+        )}
+
+        {/* Current straight line preview */}
+        {straightLineStartPoint && straightLineEndPoint && (
+          <StraightLine
+            startPoint={straightLineStartPoint}
+            endPoint={straightLineEndPoint}
+            color="#FF0000"
+            lineWidth={2}
+            bodyMesh={dude} // Pass the body mesh for surface following
           />
         )}
 

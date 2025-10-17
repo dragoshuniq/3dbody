@@ -55,9 +55,11 @@ interface BodyState {
   lines: Line[];
   isAddingPin: boolean;
   isDrawingLine: boolean;
+  isDrawingStraightLine: boolean;
   selectedPinId: string | null;
   selectedLineId: string | null;
   lineDrawingState: "idle" | "startPoint" | "endPoint";
+  straightLineDrawingState: "idle" | "startPoint" | "endPoint";
   orbitControlsEnabled: boolean;
 
   cameraPosition: { x: number; y: number; z: number };
@@ -74,8 +76,12 @@ interface BodyState {
   updateLine: (id: string, text: string) => void;
   removeLine: (id: string) => void;
   setIsDrawingLine: (isDrawing: boolean) => void;
+  setIsDrawingStraightLine: (isDrawing: boolean) => void;
   setSelectedLine: (id: string | null) => void;
   setLineDrawingState: (
+    state: "idle" | "startPoint" | "endPoint"
+  ) => void;
+  setStraightLineDrawingState: (
     state: "idle" | "startPoint" | "endPoint"
   ) => void;
   setOrbitControlsEnabled: (enabled: boolean) => void;
@@ -103,9 +109,11 @@ export const useBodyStore = create<BodyState>()(
       lines: [],
       isAddingPin: false,
       isDrawingLine: false,
+      isDrawingStraightLine: false,
       selectedPinId: null,
       selectedLineId: null,
       lineDrawingState: "idle",
+      straightLineDrawingState: "idle",
       orbitControlsEnabled: true,
       cameraPosition: { x: 0, y: 25, z: 190 },
       cameraTarget: { x: 0, y: 25, z: 0 },
@@ -176,10 +184,19 @@ export const useBodyStore = create<BodyState>()(
           orbitControlsEnabled: !isDrawing,
         }),
 
+      setIsDrawingStraightLine: (isDrawing) =>
+        set({
+          isDrawingStraightLine: isDrawing,
+          orbitControlsEnabled: !isDrawing,
+        }),
+
       setSelectedLine: (id) => set({ selectedLineId: id }),
 
       setLineDrawingState: (state) =>
         set({ lineDrawingState: state }),
+
+      setStraightLineDrawingState: (state) =>
+        set({ straightLineDrawingState: state }),
 
       setOrbitControlsEnabled: (enabled) =>
         set({ orbitControlsEnabled: enabled }),

@@ -44,4 +44,5 @@ export interface Line {
   }[];
   text: string;
   color: string;
+  isStraightLine?: boolean; // Flag to indicate if this is a straight line
 }

@@ -26,10 +26,11 @@ function App() {
     lines,
     isAddingPin,
     isDrawingLine,
+    isDrawingStraightLine,
     orbitControlsEnabled,
     setIsAddingPin,
     setIsDrawingLine,
-    setOrbitControlsEnabled,
+    setIsDrawingStraightLine,
     addPin,
     updatePin,
     updateTreatment,
@@ -125,6 +126,10 @@ function App() {
   const handleToggleLineMode = useCallback(() => {
     setIsDrawingLine(!isDrawingLine);
   }, [isDrawingLine, setIsDrawingLine]);
+
+  const handleToggleStraightLineMode = useCallback(() => {
+    setIsDrawingStraightLine(!isDrawingStraightLine);
+  }, [isDrawingStraightLine, setIsDrawingStraightLine]);
 
   const handleCameraChange = useCallback(
     (position: Vector3, target: Vector3) => {
@@ -292,7 +297,7 @@ function App() {
             >
               {isDrawingLine
                 ? "Cancel Drawing Line"
-                : "Draw Line Mode"}
+                : "Draw Freehand Line"}
             </button>
             {isDrawingLine && (
               <p
@@ -302,10 +307,51 @@ function App() {
                   color: "#ccc",
                 }}
               >
-                Click two points on the body to draw a line
+                Click and drag to draw a freehand line
                 <br />
                 <span
                   style={{ color: "#ff6b6b", fontWeight: "bold" }}
+                >
+                  Orbit controls disabled
+                </span>
+              </p>
+            )}
+          </div>
+
+          <div style={{ marginBottom: "15px" }}>
+            <button
+              onClick={handleToggleStraightLineMode}
+              style={{
+                background: isDrawingStraightLine
+                  ? "#f44336"
+                  : "#FF0000",
+                color: "white",
+                border: "none",
+                padding: "10px 15px",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontSize: "14px",
+                width: "100%",
+                marginBottom: "8px",
+              }}
+            >
+              {isDrawingStraightLine
+                ? "Cancel Drawing Straight Line"
+                : "Draw Straight Line"}
+            </button>
+            {isDrawingStraightLine && (
+              <p
+                style={{
+                  fontSize: "12px",
+                  margin: "5px 0 0 0",
+                  color: "#ccc",
+                }}
+              >
+                Click two points on the body to draw a line that
+                follows the surface curvature
+                <br />
+                <span
+                  style={{ color: "#ff0000", fontWeight: "bold" }}
                 >
                   Orbit controls disabled
                 </span>
@@ -495,6 +541,7 @@ function App() {
             onRemoveLine={handleRemoveLine}
             isAddingPin={isAddingPin}
             isDrawingLine={isDrawingLine}
+            isDrawingStraightLine={isDrawingStraightLine}
             onOpenTreatmentForm={handleOpenTreatmentForm}
             treatmentFormOpen={treatmentFormOpen}
           />
