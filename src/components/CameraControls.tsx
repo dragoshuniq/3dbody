@@ -52,8 +52,8 @@ const CameraControls = forwardRef<
   const [editTarget, setEditTarget] = useState(cameraTarget);
   const cameraPresets = {
     face: {
-      position: new Vector3(0.252, 63.931, 16.428),
-      target: new Vector3(0.252, 60.718, -7.989),
+      position: new Vector3(-0.182, 39.552, 12.143),
+      target: new Vector3(-0.182, 37.308, -4.909),
       label: "Face",
       icon: FaEye,
       color: "#4CAF50",
