@@ -1,6 +1,7 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Vector3 } from "three";
 import * as THREE from "three";
+import { Html } from "@react-three/drei";
 
 export const BackFaceCullingLine: React.FC<{
   points: Vector3[];
@@ -38,11 +39,20 @@ export const StraightLine: React.FC<{
   color: string;
   lineWidth?: number;
   bodyMesh?: THREE.Object3D; // Add body mesh for surface following
+  showMeasurement?: boolean; // Whether to show the measurement label
 }> = React.memo(
-  ({ startPoint, endPoint, color, lineWidth = 3, bodyMesh }) => {
+  ({
+    startPoint,
+    endPoint,
+    color,
+    lineWidth = 3,
+    bodyMesh,
+    showMeasurement = true,
+  }) => {
     const lineRef = useRef<THREE.Mesh>(null);
     const curveRef = useRef<THREE.Curve<Vector3> | null>(null);
     const lastParamsRef = useRef<string>("");
+    const [curveLength, setCurveLength] = useState<number>(0);
 
     React.useEffect(() => {
       if (lineRef.current) {
@@ -74,6 +84,9 @@ export const StraightLine: React.FC<{
           }
           curveRef.current = curve;
           lastParamsRef.current = cacheKey;
+
+          // Calculate the length of the curve
+          setCurveLength(curve.getLength());
         }
 
         const geometry = new THREE.TubeGeometry(
@@ -90,9 +103,56 @@ export const StraightLine: React.FC<{
         lineRef.current.geometry = geometry;
         lineRef.current.material = material;
       }
-    }, [startPoint, endPoint, color, lineWidth]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [startPoint, endPoint, color, lineWidth, bodyMesh]);
 
-    return <mesh ref={lineRef} />;
+    // Calculate midpoint for label placement
+    const midPoint = new Vector3().lerpVectors(
+      startPoint,
+      endPoint,
+      0.5
+    );
+
+    // Convert Three.js units to real-world measurements
+    // Assuming the model is scaled to 0.5 and represents an average human (~170cm tall)
+    // The model's Y range is approximately -20 to 80 units after scaling
+    // So 100 units ≈ 170cm, meaning 1 unit ≈ 1.7cm
+    const SCALE_FACTOR = 1.7; // 1 Three.js unit = 1.7 cm
+
+    const lengthCm = curveLength * SCALE_FACTOR;
+    const lengthInches = lengthCm / 2.54;
+
+    return (
+      <>
+        <mesh ref={lineRef} />
+        {showMeasurement && curveLength > 0 && (
+          <Html
+            position={midPoint}
+            center
+            distanceFactor={10}
+            style={{
+              background: "rgba(0,0,0,0.85)",
+              color: "white",
+              padding: "6px 10px",
+              borderRadius: "6px",
+              fontSize: "12px",
+              fontWeight: "bold",
+              border: `2px solid ${color}`,
+              whiteSpace: "nowrap",
+              pointerEvents: "none",
+              userSelect: "none",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+            }}
+          >
+            <div style={{ textAlign: "center" }}>
+              <div>{lengthCm.toFixed(1)} cm</div>
+              <div style={{ fontSize: "10px", opacity: 0.8 }}>
+                {lengthInches.toFixed(2)} in
+              </div>
+            </div>
+          </Html>
+        )}
+      </>
+    );
   }
 );
 
