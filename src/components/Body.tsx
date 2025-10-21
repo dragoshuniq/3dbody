@@ -374,8 +374,15 @@ const Body = forwardRef<BodyRef, BodyProps>(
       (event: MouseEvent) => {
         if (!dude) return null;
 
-        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        // Get canvas bounds to calculate coordinates relative to canvas, not window
+        const canvas = document.querySelector("canvas");
+        if (!canvas) return null;
+
+        const rect = canvas.getBoundingClientRect();
+        pointer.x =
+          ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y =
+          -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(pointer, camera);
 
@@ -537,8 +544,15 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
         event.stopPropagation();
 
-        pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
-        pointer.y = -(event.clientY / window.innerHeight) * 2 + 1;
+        // Get canvas bounds to calculate coordinates relative to canvas, not window
+        const canvas = document.querySelector("canvas");
+        if (!canvas) return;
+
+        const rect = canvas.getBoundingClientRect();
+        pointer.x =
+          ((event.clientX - rect.left) / rect.width) * 2 - 1;
+        pointer.y =
+          -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
         raycaster.setFromCamera(pointer, camera);
 
