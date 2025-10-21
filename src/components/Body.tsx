@@ -972,13 +972,24 @@ const Body = forwardRef<BodyRef, BodyProps>(
 
         {/* Current straight line preview */}
         {straightLineStartPoint && straightLineEndPoint && (
-          <StraightLine
-            startPoint={straightLineStartPoint}
-            endPoint={straightLineEndPoint}
-            color="#FF0000"
-            lineWidth={2}
-            bodyMesh={dude} // Pass the body mesh for surface following
-          />
+          <>
+            <StraightLine
+              startPoint={straightLineStartPoint}
+              endPoint={straightLineEndPoint}
+              color="#FF0000"
+              lineWidth={2}
+              bodyMesh={dude} // Pass the body mesh for surface following
+            />
+            {/* Direction chevron at the end point of the red line */}
+            <mesh position={straightLineEndPoint}>
+              <coneGeometry args={[0.3, 0.8, 8]} />
+              <meshStandardMaterial
+                color="#FF0000"
+                emissive="#FF0000"
+                emissiveIntensity={0.5}
+              />
+            </mesh>
+          </>
         )}
 
         <ambientLight intensity={0.4} />
