@@ -1,7 +1,6 @@
 import { useCallback, useRef, useEffect, useState } from "react";
-import { Canvas, useThree } from "@react-three/fiber";
+import { Canvas } from "@react-three/fiber";
 import { Vector3 } from "three";
-import * as THREE from "three";
 import Body, { type BodyRef } from "./components/Body";
 import CameraControls, {
   type CameraControlsRef,
@@ -160,52 +159,8 @@ function App() {
     [selectedPinId, updateTreatment, handleCloseTreatmentForm]
   );
 
-  const PointerMissedHandler = () => {
-    const { camera } = useThree();
-
-    const handlePointerMissed = useCallback(
-      (event: MouseEvent) => {
-        // Only handle missed clicks when in pin mode and orbit controls are disabled
-        if (!isAddingPin || orbitControlsEnabled) return;
-
-        const x = (event.clientX / window.innerWidth) * 2 - 1;
-        const y = -(event.clientY / window.innerHeight) * 2 + 1;
-
-        const vector = new THREE.Vector3(x, y, 0.5);
-        vector.unproject(camera);
-
-        const direction = vector.sub(camera.position).normalize();
-
-        const distance = 10;
-        const position = camera.position
-          .clone()
-          .add(direction.multiplyScalar(distance));
-
-        const newPin: Pin = {
-          id: Date.now().toString(),
-          position: {
-            x: position.x,
-            y: position.y,
-            z: position.z,
-          },
-          comment: "",
-        };
-        addPin(newPin);
-      },
-      [camera, isAddingPin, orbitControlsEnabled, addPin]
-    );
-
-    useEffect(() => {
-      const canvas = document.querySelector("canvas");
-      if (canvas) {
-        canvas.addEventListener("click", handlePointerMissed);
-        return () =>
-          canvas.removeEventListener("click", handlePointerMissed);
-      }
-    }, [handlePointerMissed]);
-
-    return null;
-  };
+  // Removed PointerMissedHandler - it was creating duplicate pins
+  // The handleClick in Body.tsx already handles all pin placement
 
   return (
     <div
@@ -528,7 +483,6 @@ function App() {
           camera={{ position: [0, 25, 190], fov: 50 }}
           style={{ background: "#f0f0f0", flex: 1 }}
         >
-          <PointerMissedHandler />
           <Body
             ref={bodyRef}
             pins={pins}

@@ -676,11 +676,27 @@ const Body = forwardRef<BodyRef, BodyProps>(
       ]
     );
 
+    // Unified click handler to prevent multiple handlers from firing
+    const handleCanvasClick = useCallback(
+      (event: MouseEvent) => {
+        if (isAddingPin) {
+          handleClick(event);
+        } else if (isDrawingStraightLine) {
+          handleStraightLineClick(event);
+        }
+      },
+      [
+        isAddingPin,
+        isDrawingStraightLine,
+        handleClick,
+        handleStraightLineClick,
+      ]
+    );
+
     React.useEffect(() => {
       const canvas = document.querySelector("canvas");
       if (canvas) {
-        canvas.addEventListener("click", handleClick);
-        canvas.addEventListener("click", handleStraightLineClick);
+        canvas.addEventListener("click", handleCanvasClick);
         canvas.addEventListener("mousedown", handlePointerDown);
         canvas.addEventListener("mouseup", handlePointerUp);
         canvas.addEventListener("mousemove", handlePointerMove);
@@ -689,11 +705,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
           handleStraightLineMouseMove
         );
         return () => {
-          canvas.removeEventListener("click", handleClick);
-          canvas.removeEventListener(
-            "click",
-            handleStraightLineClick
-          );
+          canvas.removeEventListener("click", handleCanvasClick);
           canvas.removeEventListener("mousedown", handlePointerDown);
           canvas.removeEventListener("mouseup", handlePointerUp);
           canvas.removeEventListener("mousemove", handlePointerMove);
@@ -704,8 +716,7 @@ const Body = forwardRef<BodyRef, BodyProps>(
         };
       }
     }, [
-      handleClick,
-      handleStraightLineClick,
+      handleCanvasClick,
       handlePointerDown,
       handlePointerUp,
       handlePointerMove,
