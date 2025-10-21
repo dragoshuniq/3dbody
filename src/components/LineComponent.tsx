@@ -129,6 +129,7 @@ export const StraightLine: React.FC<{
             position={midPoint}
             center
             distanceFactor={10}
+            zIndexRange={[0, 0]}
             style={{
               background: "rgba(0,0,0,0.85)",
               color: "white",
@@ -141,6 +142,7 @@ export const StraightLine: React.FC<{
               pointerEvents: "none",
               userSelect: "none",
               boxShadow: "0 2px 8px rgba(0,0,0,0.3)",
+              zIndex: 1,
             }}
           >
             <div style={{ textAlign: "center" }}>
